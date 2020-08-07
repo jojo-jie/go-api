@@ -1,25 +1,3 @@
-# 本项目基于Singo，学习封装自用
-# Singo 
-
-Singo: Simple Single Golang Web Service
-
-go-crud正式改名为Singo!
-
-使用Singo开发Web服务: 用最简单的架构，实现够用的框架，服务海量用户
-
-https://github.com/bydmm/singo
-
-## Singo文档
-
-https://singo.gourouting.com/
-
-## 视频实况教程
-
-[让我们写个G站吧！Golang全栈编程实况](https://space.bilibili.com/10/channel/detail?cid=78794)
-
-## 使用Singo开发的项目实例
-
-https://github.com/bydmm/giligili
 
 ## 目的
 
@@ -35,8 +13,8 @@ https://github.com/bydmm/giligili
 4. [Go-Redis](https://github.com/go-redis/redis): Golang Redis客户端
 5. [godotenv](https://github.com/joho/godotenv): 开发环境下的环境变量工具，方便使用环境变量
 6. [Gin-Cors](https://github.com/gin-contrib/cors): Gin框架提供的跨域中间件
-7. [Swagger]
-8. [jwt]
+7. [Swagger](github.com/swaggo/gin-swagger): go swagger
+8. [jwt](https://github.com/dgrijalva/jwt-go): go jwt
 9. 自行实现了国际化i18n的一些基本功能
 10. 本项目是使用基于cookie实现的session来保存登录状态的，如果需要可以自行修改为token验证
 
