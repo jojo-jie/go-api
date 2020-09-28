@@ -26,7 +26,18 @@ func Init() {
 
 	// http 请求日志
 	date := time.Now().Format("2006-01-02")
-	path := "./logs/" + date + ".log"
+	logsDir := "./logs"
+	ret, err := util.PathExists(logsDir)
+	if err != nil {
+		util.Log().Panic("是否存在logs目录发生错误", err)
+	}
+	if !ret {
+		// logsDir 不存在创建
+		if err=os.Mkdir(logsDir, os.ModePerm);err!=nil {
+			util.Log().Panic("logs dir is create fail", err)
+		}
+	}
+	path := logsDir + "/" + date + ".log"
 	log, _ := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	gin.DefaultWriter = io.MultiWriter(log, os.Stdout)
 
