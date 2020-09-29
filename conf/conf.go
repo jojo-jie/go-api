@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go-api/cache"
@@ -43,7 +42,6 @@ func Init() {
 	gin.DefaultWriter = io.MultiWriter(log, os.Stdout)
 
 	// 连接数据库
-	fmt.Fprint(gin.DefaultErrorWriter, os.Getenv("REDIS_ADDR"))
 	model.Database(os.Getenv("MYSQL_DSN"))
 	cache.Redis()
 }
