@@ -35,7 +35,11 @@ func NewRouter() *gin.Engine {
 			// User Routing
 			auth.GET("user/me", api.UserMe)
 			auth.DELETE("user/logout", api.UserLogout)
+
+			//refresh token
+			auth.PUT("user/token/refresh", api.UserTokenRefresh)
 		}
 	}
 	return r
 }
+

@@ -21,5 +21,5 @@ func main() {
 
 	// 装载路由
 	r := server.NewRouter()
-	r.Run(":3001")
+	r.Run(":3000")
 }

@@ -7,6 +7,7 @@ import (
 	"go-api/model"
 	"go-api/serializer"
 	"go-api/util"
+	"os"
 	"strconv"
 	"time"
 
@@ -20,10 +21,10 @@ type UserLoginService struct {
 }
 
 // setToken 设置token
-func (service *UserLoginService) setToken(user model.User) (string, int64,error) {
+func (service *UserLoginService) setToken(user model.User, ttl int64) (string, int64, error) {
 	j := middleware.NewJWT()
 	notBefore := time.Now().Unix() - 1000
-	expiresAt := time.Now().Unix() + 3600
+	expiresAt := time.Now().Unix() + ttl
 	claims := middleware.CustomClaims{
 		ID:    user.ID,
 		Name:  user.Nickname,
@@ -50,14 +51,18 @@ func (service *UserLoginService) Login(c *gin.Context) serializer.Response {
 	}
 
 	// 设置token
-	token, expiresAt,err := service.setToken(user)
+	ttl, err := strconv.Atoi(os.Getenv("TOKEN_TTL"))
+	if err != nil {
+		return serializer.Err(serializer.CodeTokenError, "token 获取失败", err)
+	}
+	token, expiresAt, err := service.setToken(user, int64(ttl))
 	if err != nil {
 		return serializer.Err(serializer.CodeTokenError, "token 获取失败", err)
 	}
 
-	tokenMD5:=util.StringToMD5(token)
-	key:=strconv.Itoa(int(user.ID))
-	cache.RedisClient.Set("user:"+key,tokenMD5,3600*time.Second)
+	tokenMD5 := util.StringToMD5(token)
+	key := strconv.Itoa(int(user.ID))
+	cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second)
 
-	return serializer.BuildToken(user,token,expiresAt)
+	return serializer.BuildToken(user, token, expiresAt)
 }

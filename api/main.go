@@ -26,14 +26,14 @@ func Ping(c *gin.Context) {
 }
 
 // CurrentUser 获取当前用户
-func CurrentUser(c *gin.Context) (model.User,error) {
+func CurrentUser(c *gin.Context) (model.User, error) {
 	if claims, _ := c.Get("claims"); claims != nil {
 		if u, ok := claims.(*middleware.CustomClaims); ok {
-			user,err:= model.GetUser(u.ID)
-			return user,err
+			user, err := model.GetUser(u.ID)
+			return user, err
 		}
 	}
-	return model.User{},errors.New("无法获取用户信息")
+	return model.User{}, errors.New("无法获取用户信息")
 }
 
 // ErrorResponse 返回错误消息
@@ -53,4 +53,15 @@ func ErrorResponse(err error) serializer.Response {
 	}
 
 	return serializer.ParamErr("参数错误", err)
+}
+
+//刷新token
+func TokenRefresh(c *gin.Context) (string, error) {
+	j := middleware.NewJWT()
+	if token, _ := c.Get("token"); token != nil {
+		if tokenStr, ok := token.(string); ok {
+			return j.RefreshToken(tokenStr)
+		}
+	}
+	return "", errors.New("刷新失败")
 }
