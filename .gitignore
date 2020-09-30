@@ -4,3 +4,4 @@
 go.sum
 vendor/
 logs/
+tmp/
