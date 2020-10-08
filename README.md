@@ -55,8 +55,8 @@ GIN_MODE="debug"
 本项目使用[Go Mod](https://github.com/golang/go/wiki/Modules)管理依赖。
 
 ```shell
-go mod init go-crud
-export GOPROXY=http://mirrors.aliyun.com/goproxy/
+go mod init go-api
+export GOPROXY=https://goproxy.io
 go run main.go // 自动安装
 ```
 
