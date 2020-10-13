@@ -16,6 +16,7 @@ ENV REDIS_DB=""
 ENV MYSQL_DSN=""
 ENV GIN_MODE="release"
 ENV PORT=3000
+ENV TOKEN_TTL=3600
 
 RUN echo "http://mirrors.aliyun.com/alpine/v3.7/main/" > /etc/apk/repositories && \
     apk update && \
