@@ -11,39 +11,13 @@ definitions:
         type: string
     type: object
   serializer.UserList:
-    properties:
-      list:
-        items:
-          $ref: '#/definitions/serializer.UserToken'
-        type: array
-      total:
-        type: integer
     type: object
-  serializer.UserToken:
-    properties:
-      avatar:
-        type: string
-      created_at:
-        type: integer
-      expires_at:
-        type: integer
-      id:
-        type: integer
-      nickname:
-        type: string
-      status:
-        type: string
-      token:
-        type: string
-      username:
-        type: string
-    type: object
-host: gin.admin.test:3001
+host: gin.admin.test:3000
 info:
   contact:
     email: 18624275868@163.com
     name: kirito
-    url: http://gin.admin.test:3001/swagger/index.html
+    url: http://gin.admin.test:3000/swagger/index.html
   description: 接口文档
   license:
     name: Apache 2.0

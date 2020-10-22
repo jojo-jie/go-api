@@ -6,13 +6,16 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go-api/api"
 	"go-api/middleware"
+	"os"
 )
 
 // NewRouter 路由配置
 func NewRouter() *gin.Engine {
 	r := gin.Default()
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	if os.Getenv("GIN_MODE")!="release" {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 	// 中间件, 顺序不能改
 	r.Use(middleware.Cors())
 	//r.Use(middleware.CurrentUser())

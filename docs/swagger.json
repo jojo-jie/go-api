@@ -5,7 +5,7 @@
         "title": "Gin swagger",
         "contact": {
             "name": "kirito",
-            "url": "http://gin.admin.test:3001/swagger/index.html",
+            "url": "http://gin.admin.test:3000/swagger/index.html",
             "email": "18624275868@163.com"
         },
         "license": {
@@ -14,7 +14,7 @@
         },
         "version": "1.0"
     },
-    "host": "gin.admin.test:3001",
+    "host": "gin.admin.test:3000",
     "paths": {
         "/api/v1/ping": {
             "post": {
@@ -90,47 +90,7 @@
             }
         },
         "serializer.UserList": {
-            "type": "object",
-            "properties": {
-                "list": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/serializer.UserToken"
-                    }
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "serializer.UserToken": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "integer"
-                },
-                "expires_at": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "nickname": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
+            "type": "object"
         }
     }
 }
