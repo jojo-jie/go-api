@@ -16,7 +16,7 @@ import (
 // @Accept json
 // @Tags Ping
 // @Produce  json
-// @Router /api/v1/ping [post]
+// @Router /api/v1/ping [get]
 // @Success 200 {object} serializer.Response
 func Ping(c *gin.Context) {
 	c.JSON(200, serializer.Response{
