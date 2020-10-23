@@ -10,7 +10,24 @@ definitions:
       msg:
         type: string
     type: object
-  serializer.UserList:
+  serializer.UserToken:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: integer
+      expires_at:
+        type: integer
+      id:
+        type: integer
+      nickname:
+        type: string
+      status:
+        type: string
+      token:
+        type: string
+      username:
+        type: string
     type: object
 host: localhost
 info:
@@ -26,7 +43,7 @@ info:
   version: "1.0"
 paths:
   /api/v1/ping:
-    post:
+    get:
       consumes:
       - application/json
       produces:
@@ -56,7 +73,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializer.UserList'
+            $ref: '#/definitions/serializer.UserToken'
       summary: 用户登录接口
       tags:
       - User

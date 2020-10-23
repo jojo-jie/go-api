@@ -62,7 +62,8 @@ func (service *UserLoginService) Login(c *gin.Context) serializer.Response {
 
 	tokenMD5 := util.StringToMD5(token)
 	key := strconv.Itoa(int(user.ID))
-	cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second)
-
+	if err := cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second).Err(); err != nil {
+		panic(err)
+	}
 	return serializer.BuildToken(user, token, expiresAt)
 }

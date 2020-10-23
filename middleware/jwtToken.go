@@ -35,13 +35,15 @@ func JWTAuth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
 		tokenMD5 := util.StringToMD5(token)
 		key := strconv.Itoa(int(claims.ID))
-		if strings.Compare(cache.RedisClient.Get("user:"+key).Val(), tokenMD5) == -1 {
-			c.JSON(200, serializer.Err(serializer.CodeParamErr, "token失效", nil))
+		if strings.Compare(cache.RedisClient.Get("user:"+key).Val(), tokenMD5) != 0 {
+			c.JSON(400, serializer.Err(serializer.CodeParamErr, "token失效, 重新获取", nil))
 			c.Abort()
 			return
 		}
+
 		// 继续交由下一个路由处理，并将解析出的信息传递下去
 		c.Set("claims", claims)
 		c.Set("token", token)

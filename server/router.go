@@ -12,6 +12,9 @@ import (
 func NewRouter() *gin.Engine {
 	r := gin.Default()
 
+	r.NoMethod(api.HandleNotFound)
+	r.NoRoute(api.HandleNotFound)
+
 	if gin.Mode() != gin.ReleaseMode {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}

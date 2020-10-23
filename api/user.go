@@ -15,9 +15,9 @@ import (
 
 // UserRegister 用户注册接口
 func UserRegister(c *gin.Context) {
-	var service service.UserRegisterService
-	if err := c.ShouldBind(&service); err == nil {
-		res := service.Register()
+	var registerService service.UserRegisterService
+	if err := c.ShouldBind(&registerService); err == nil {
+		res := registerService.Register()
 		c.JSON(200, res)
 	} else {
 		c.JSON(200, ErrorResponse(err))
@@ -30,9 +30,14 @@ func UserRegister(c *gin.Context) {
 // @Param username formData string true "username"
 // @Param password formData string true "password"
 // @Router /api/v1/user/login [post]
-// @Success 200 {object} serializer.UserList
+// @Success 200 {object} serializer.BuildUser
 func UserLogin(c *gin.Context) {
 	var loginService service.UserLoginService
+	defer func() {
+		if err := recover(); err != nil {
+			c.JSON(400, serializer.Err(40014, "发生错误", nil))
+		}
+	}()
 	if err := c.ShouldBind(&loginService); err == nil {
 		res := loginService.Login(c)
 		c.JSON(200, res)
@@ -56,7 +61,7 @@ func UserLogout(c *gin.Context) {
 	if claims, _ := c.Get("claims"); claims != nil {
 		if u, ok := claims.(*middleware.CustomClaims); ok {
 			key := strconv.Itoa(int(u.ID))
-			cache.RedisClient.Del("user:" + key)
+			cache.RedisClient.Del("user:" + key).Err()
 			c.JSON(200, serializer.Response{
 				Code: 0,
 				Msg:  "你丫的GG了",
@@ -82,11 +87,11 @@ func UserTokenRefresh(c *gin.Context) {
 		c.JSON(200, serializer.Err(40010, "发生错误", err))
 	} else {
 		if claims, _ := c.Get("claims"); claims != nil {
-			if u,ok:=claims.(*middleware.CustomClaims);ok {
+			if u, ok := claims.(*middleware.CustomClaims); ok {
 				tokenMD5 := util.StringToMD5(token)
 				key := strconv.Itoa(int(u.ID))
 				ttl, _ := strconv.Atoi(os.Getenv("TOKEN_TTL"))
-				cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second)
+				cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second).Err()
 			}
 		}
 
@@ -96,4 +101,9 @@ func UserTokenRefresh(c *gin.Context) {
 			Data: token,
 		})
 	}
+}
+
+//route 或 method 不存在 统一错误信息
+func HandleNotFound(c *gin.Context) {
+	c.JSON(404, serializer.Err(400004, "请求不存在", nil))
 }

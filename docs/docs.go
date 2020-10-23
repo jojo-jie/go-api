@@ -33,7 +33,7 @@ var doc = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/api/v1/ping": {
-            "post": {
+            "get": {
                 "consumes": [
                     "application/json"
                 ],
@@ -80,7 +80,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/serializer.UserList"
+                            "$ref": "#/definitions/serializer.UserToken"
                         }
                     }
                 }
@@ -105,8 +105,34 @@ var doc = `{
                 }
             }
         },
-        "serializer.UserList": {
-            "type": "object"
+        "serializer.UserToken": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "expires_at": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
         }
     }
 }`
