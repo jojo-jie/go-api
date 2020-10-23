@@ -5,7 +5,7 @@
         "title": "Gin swagger",
         "contact": {
             "name": "kirito",
-            "url": "http://gin.admin.test:3000/swagger/index.html",
+            "url": "http://localhost/swagger/index.html",
             "email": "18624275868@163.com"
         },
         "license": {
@@ -14,7 +14,7 @@
         },
         "version": "1.0"
     },
-    "host": "gin.admin.test:3000",
+    "host": "localhost",
     "paths": {
         "/api/v1/ping": {
             "post": {

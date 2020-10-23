@@ -32,9 +32,9 @@ func UserRegister(c *gin.Context) {
 // @Router /api/v1/user/login [post]
 // @Success 200 {object} serializer.UserList
 func UserLogin(c *gin.Context) {
-	var service service.UserLoginService
-	if err := c.ShouldBind(&service); err == nil {
-		res := service.Login(c)
+	var loginService service.UserLoginService
+	if err := c.ShouldBind(&loginService); err == nil {
+		res := loginService.Login(c)
 		c.JSON(200, res)
 	} else {
 		c.JSON(200, ErrorResponse(err))

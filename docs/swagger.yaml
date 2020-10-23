@@ -12,12 +12,12 @@ definitions:
     type: object
   serializer.UserList:
     type: object
-host: gin.admin.test:3000
+host: localhost
 info:
   contact:
     email: 18624275868@163.com
     name: kirito
-    url: http://gin.admin.test:3000/swagger/index.html
+    url: http://localhost/swagger/index.html
   description: 接口文档
   license:
     name: Apache 2.0

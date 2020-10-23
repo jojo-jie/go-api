@@ -20,7 +20,7 @@ var doc = `{
         "title": "{{.Title}}",
         "contact": {
             "name": "kirito",
-            "url": "http://gin.admin.test:3000/swagger/index.html",
+            "url": "http://localhost/swagger/index.html",
             "email": "18624275868@163.com"
         },
         "license": {
@@ -123,7 +123,7 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
-	Host:        "gin.admin.test:3000",
+	Host:        "localhost",
 	BasePath:    "",
 	Schemes:     []string{},
 	Title:       "Gin swagger",

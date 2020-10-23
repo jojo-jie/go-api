@@ -2,11 +2,9 @@ package service
 
 import (
 	"github.com/dgrijalva/jwt-go"
-	"go-api/cache"
 	"go-api/middleware"
 	"go-api/model"
 	"go-api/serializer"
-	"go-api/util"
 	"os"
 	"strconv"
 	"time"
@@ -60,9 +58,9 @@ func (service *UserLoginService) Login(c *gin.Context) serializer.Response {
 		return serializer.Err(serializer.CodeTokenError, "token 获取失败", err)
 	}
 
-	tokenMD5 := util.StringToMD5(token)
+	/*tokenMD5 := util.StringToMD5(token)
 	key := strconv.Itoa(int(user.ID))
-	cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second)
+	cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second)*/
 
 	return serializer.BuildToken(user, token, expiresAt)
 }
