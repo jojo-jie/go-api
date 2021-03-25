@@ -1,12 +1,12 @@
 package model
 
 import (
+	"go-api/ent"
 	"go-api/util"
 	"time"
 
 	"github.com/jinzhu/gorm"
 
-	//
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
@@ -32,4 +32,15 @@ func Database(connString string) {
 	DB = db
 
 	migration()
+}
+
+var Client *ent.Client
+
+// ent
+func DatabaseEnt(connString string) {
+	client, err := ent.Open("mysql", connString)
+	if err != nil {
+		util.Log().Panic("连接数据库不成功", err)
+	}
+	Client = client
 }

@@ -1,8 +1,10 @@
 package service
 
 import (
-	"github.com/dgrijalva/jwt-go"
+	"context"
 	"go-api/cache"
+	"go-api/ent"
+	"go-api/ent/user"
 	"go-api/middleware"
 	"go-api/model"
 	"go-api/serializer"
@@ -10,6 +12,10 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/dgrijalva/jwt-go"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,12 +27,12 @@ type UserLoginService struct {
 }
 
 // setToken 设置token
-func (service *UserLoginService) setToken(user model.User, ttl int64) (string, int64, error) {
+func (service *UserLoginService) setToken(user *ent.User, ttl int64) (string, int64, error) {
 	j := middleware.NewJWT()
 	notBefore := time.Now().Unix() - 1000
 	expiresAt := time.Now().Unix() + ttl
 	claims := middleware.CustomClaims{
-		ID:    user.ID,
+		ID:    uint(user.ID),
 		Name:  user.Nickname,
 		Phone: "",
 		StandardClaims: jwt.StandardClaims{
@@ -40,13 +46,12 @@ func (service *UserLoginService) setToken(user model.User, ttl int64) (string, i
 
 // Login 用户登录函数
 func (service *UserLoginService) Login(c *gin.Context) serializer.Response {
-	var user model.User
-
-	if err := model.DB.Where("username = ?", service.Username).First(&user).Error; err != nil {
-		return serializer.ParamErr("账号或密码错误", nil)
+	member, err := model.Client.User.Query().Where(user.Username(service.Username)).First(context.TODO())
+	if err != nil {
+		return serializer.ParamErr("账号或d密码错误", nil)
 	}
 
-	if user.CheckPassword(service.Password) == false {
+	if checkPassword(member, service) {
 		return serializer.ParamErr("账号或密码错误", nil)
 	}
 
@@ -55,15 +60,19 @@ func (service *UserLoginService) Login(c *gin.Context) serializer.Response {
 	if err != nil {
 		return serializer.Err(serializer.CodeTokenError, "token 获取失败", err)
 	}
-	token, expiresAt, err := service.setToken(user, int64(ttl))
+	token, expiresAt, err := service.setToken(member, int64(ttl))
 	if err != nil {
 		return serializer.Err(serializer.CodeTokenError, "token 获取失败", err)
 	}
 
 	tokenMD5 := util.StringToMD5(token)
-	key := strconv.Itoa(int(user.ID))
+	key := strconv.Itoa(member.ID)
 	if err := cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second).Err(); err != nil {
 		panic(err)
 	}
-	return serializer.BuildToken(user, token, expiresAt)
+	return serializer.BuildToken(member, token, expiresAt)
+}
+
+func checkPassword(u *ent.User, service *UserLoginService) bool {
+	return bcrypt.CompareHashAndPassword([]byte(u.PasswordDigest), []byte(service.Password)) == nil
 }

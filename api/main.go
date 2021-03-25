@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-api/conf"
+	"go-api/ent"
 	"go-api/middleware"
 	"go-api/model"
 	"go-api/serializer"
+
+	"github.com/gin-gonic/gin"
 	"gopkg.in/go-playground/validator.v8"
 )
 
@@ -26,14 +28,14 @@ func Ping(c *gin.Context) {
 }
 
 // CurrentUser 获取当前用户
-func CurrentUser(c *gin.Context) (model.User, error) {
+func CurrentUser(c *gin.Context) (*ent.User, error) {
 	if claims, _ := c.Get("claims"); claims != nil {
 		if u, ok := claims.(*middleware.CustomClaims); ok {
-			user, err := model.GetUser(u.ID)
-			return user, err
+			m, err := model.Client.User.Get(c, int(u.ID))
+			return m, err
 		}
 	}
-	return model.User{}, errors.New("无法获取用户信息")
+	return nil, errors.New("无法获取用户信息")
 }
 
 // ErrorResponse 返回错误消息

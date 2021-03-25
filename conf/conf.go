@@ -1,14 +1,15 @@
 package conf
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"go-api/cache"
 	"go-api/model"
 	"go-api/util"
 	"io"
 	"os"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 // Init 初始化配置项
@@ -33,7 +34,7 @@ func Init() {
 	}
 	if !ret {
 		// logsDir 不存在创建
-		if err=os.Mkdir(logsDir, os.ModePerm);err!=nil {
+		if err = os.Mkdir(logsDir, os.ModePerm); err != nil {
 			util.Log().Panic("logs dir is create fail", err)
 		}
 	}
@@ -42,6 +43,6 @@ func Init() {
 	gin.DefaultWriter = io.MultiWriter(log, os.Stdout)
 
 	// 连接数据库
-	model.Database(os.Getenv("MYSQL_DSN"))
+	model.DatabaseEnt(os.Getenv("MYSQL_DSN"))
 	cache.Redis()
 }

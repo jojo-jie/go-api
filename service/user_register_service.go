@@ -70,5 +70,5 @@ func (service *UserRegisterService) Register() serializer.Response {
 		return serializer.ParamErr("注册失败", err)
 	}
 
-	return serializer.BuildUserResponse(user)
+	return serializer.BuildUserResponse(nil)
 }

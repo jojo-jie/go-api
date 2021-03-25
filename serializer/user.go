@@ -1,7 +1,7 @@
 package serializer
 
 import (
-	"go-api/model"
+	"go-api/ent"
 )
 
 // User 用户序列化器
@@ -24,18 +24,17 @@ type UserToken struct {
 	CreatedAt int64  `json:"created_at"`
 	Token     string `json:"token"`
 	ExpiresAt int64  `json:"expires_at"`
-
 }
 
 type UserList struct {
-	list []UserToken
+	list  []UserToken
 	total int `json:"total"`
 }
 
 // BuildUser 序列化用户
-func BuildUser(user model.User) User {
+func BuildUser(user *ent.User) User {
 	return User{
-		ID:        user.ID,
+		ID:        uint(user.ID),
 		Username:  user.Username,
 		Nickname:  user.Nickname,
 		Status:    user.Status,
@@ -45,9 +44,9 @@ func BuildUser(user model.User) User {
 }
 
 // BuildUserToken 序列化用户带token信息
-func BuildUserToken(user model.User,token string,expiresAt int64) UserToken {
+func BuildUserToken(user *ent.User, token string, expiresAt int64) UserToken {
 	return UserToken{
-		ID:        user.ID,
+		ID:        uint(user.ID),
 		Username:  user.Username,
 		Nickname:  user.Nickname,
 		Status:    user.Status,
@@ -59,14 +58,14 @@ func BuildUserToken(user model.User,token string,expiresAt int64) UserToken {
 }
 
 // BuildUser
-func BuildToken(user model.User,token string,expiresAt int64) Response {
+func BuildToken(user *ent.User, token string, expiresAt int64) Response {
 	return Response{
-		Data:  BuildUserToken(user,token,expiresAt),
+		Data: BuildUserToken(user, token, expiresAt),
 	}
 }
 
 // BuildUserResponse 序列化用户响应
-func BuildUserResponse(user model.User) Response {
+func BuildUserResponse(user *ent.User) Response {
 	return Response{
 		Data: BuildUser(user),
 	}
