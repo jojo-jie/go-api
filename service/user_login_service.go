@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"go-api/cache"
 	"go-api/ent"
 	"go-api/ent/user"
@@ -48,11 +49,11 @@ func (service *UserLoginService) setToken(user *ent.User, ttl int64) (string, in
 func (service *UserLoginService) Login(c *gin.Context) serializer.Response {
 	member, err := model.Client.User.Query().Where(user.Username(service.Username)).First(context.TODO())
 	if err != nil {
-		return serializer.ParamErr("账号或d密码错误", nil)
+		return serializer.ParamErr("账号或d密码错误", err)
 	}
 
 	if checkPassword(member, service) {
-		return serializer.ParamErr("账号或密码错误", nil)
+		return serializer.ParamErr("账号或密码错误", err)
 	}
 
 	// 设置token
@@ -68,6 +69,14 @@ func (service *UserLoginService) Login(c *gin.Context) serializer.Response {
 	tokenMD5 := util.StringToMD5(token)
 	key := strconv.Itoa(member.ID)
 	if err := cache.RedisClient.Set("user:"+key, tokenMD5, time.Duration(ttl)*time.Second).Err(); err != nil {
+		panic(err)
+	}
+	mJson,err:=json.Marshal(member)
+	if err!=nil {
+		panic(err)
+	}
+
+	if err:=cache.RedisClient.Set("member:"+key, string(mJson),0).Err();err!=nil {
 		panic(err)
 	}
 	return serializer.BuildToken(member, token, expiresAt)
