@@ -32,6 +32,7 @@ func Ping(c *gin.Context) {
 	})
 }
 
+var sg = &singleflight.Group{}
 // CurrentUser 获取当前用户
 func CurrentUser(c *gin.Context) (*ent.User, error) {
 	if claims, _ := c.Get("claims"); claims != nil {
@@ -47,7 +48,6 @@ func CurrentUser(c *gin.Context) (*ent.User, error) {
 				json.Unmarshal([]byte(mj), &d)
 				m = &d
 			} else {
-				sg:=new(singleflight.Group)
 				ch:=make(chan *ent.User)
 				for i:=0;i<1000;i++ {
 					go func() {
