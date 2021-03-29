@@ -77,7 +77,7 @@ func UserLogout(c *gin.Context) {
 	s.Save()
 	c.JSON(200, serializer.Response{
 		Code: 0,
-		Msg:  "你丫的GG了",
+		Msg:  "~~",
 	})*/
 }
 
