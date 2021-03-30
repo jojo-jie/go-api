@@ -78,3 +78,7 @@ go run main.go
 ```air
 air
 ```
+## linux or macos
+```
+make
+```
