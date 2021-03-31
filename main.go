@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-contrib/pprof"
 	"go-api/conf"
 	_ "go-api/docs"
 	"go-api/server"
@@ -21,5 +22,6 @@ func main() {
 
 	// 装载路由
 	r := server.NewRouter()
+	pprof.Register(r)
 	r.Run(":3000")
 }
