@@ -18,6 +18,7 @@
 8. [jwt](https://github.com/dgrijalva/jwt-go): go jwt
 9. 自行实现了国际化i18n的一些基本功能
 10. 本项目可使用基于cookie实现的session来保存登录状态的，或使用jwt token验证
+11. 令牌桶限流
 
 本项目已经预先实现了一些常用的代码方便参考和复用:
 

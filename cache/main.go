@@ -4,8 +4,10 @@ import (
 	"os"
 	"go-api/util"
 	"strconv"
+	"time"
 
 	"github.com/go-redis/redis"
+	localcache "github.com/patrickmn/go-cache"
 )
 
 // RedisClient Redis缓存客户端单例
@@ -27,4 +29,10 @@ func Redis() {
 	}
 
 	RedisClient = client
+}
+
+var LocalCacheClient *localcache.Cache
+
+func LocalCache() {
+	LocalCacheClient =  localcache.New(5*time.Minute, 10*time.Minute)
 }

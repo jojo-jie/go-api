@@ -45,4 +45,5 @@ func Init() {
 	// 连接数据库
 	model.DatabaseEnt(os.Getenv("MYSQL_DSN"))
 	cache.Redis()
+	cache.LocalCache()
 }

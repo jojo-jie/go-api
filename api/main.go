@@ -12,6 +12,7 @@ import (
 	"go-api/middleware"
 	"go-api/model"
 	"go-api/serializer"
+	"go-api/util"
 	"golang.org/x/sync/singleflight"
 	"gopkg.in/go-playground/validator.v8"
 	"strconv"
@@ -33,6 +34,7 @@ func Ping(c *gin.Context) {
 }
 
 var sg = &singleflight.Group{}
+
 // CurrentUser 获取当前用户
 func CurrentUser(c *gin.Context) (*ent.User, error) {
 	if claims, _ := c.Get("claims"); claims != nil {
@@ -43,18 +45,20 @@ func CurrentUser(c *gin.Context) (*ent.User, error) {
 			key := buf.String()
 			var m *ent.User
 			if isExist(key) {
-				mj, _ := cache.RedisClient.Get(key).Result()
 				var d ent.User
+				var mj string
+				ml,ok:= cache.LocalCacheClient.Get(key)
+				if ok {
+					mj = ml.(string)
+					util.Log().Info("local %s",mj)
+				} else {
+					mj, _ = cache.RedisClient.Get(key).Result()
+				}
 				json.Unmarshal([]byte(mj), &d)
 				m = &d
 			} else {
-				ch:=make(chan *ent.User)
-				for i:=0;i<1000;i++ {
-					go func() {
-						ch <- getUser(key, c, int(u.ID), sg)
-					}()
-				}
-				m=<-ch
+				// singleflight
+				m = getUser(key, c, int(u.ID))
 			}
 			return m, nil
 		}
@@ -63,18 +67,19 @@ func CurrentUser(c *gin.Context) (*ent.User, error) {
 }
 
 func isExist(key string) bool {
-	if n,err:=cache.RedisClient.Exists(key).Result();err==nil && n == 0 {
+	if n, err := cache.RedisClient.Exists(key).Result(); err == nil && n == 0 {
 		return false
 	}
 	return true
 }
 
-func getUser(key string, c context.Context, id int, sg *singleflight.Group) *ent.User {
-	v,_,_:=sg.Do("getme", func() (interface{}, error) {
+func getUser(key string, c context.Context, id int) *ent.User {
+	v, _, _ := sg.Do("me", func() (interface{}, error) {
 		m, _ := model.Client.User.Get(c, id)
 		mJson, _ := json.Marshal(m)
+		cache.LocalCacheClient.Set(key, string(mJson), 3600*time.Second)
 		cache.RedisClient.Set(key, string(mJson), 3600*time.Second)
-		return m,nil
+		return m, nil
 	})
 	return v.(*ent.User)
 }
