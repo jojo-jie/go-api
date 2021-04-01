@@ -33,6 +33,8 @@ const (
 	CodeParamErr = 40001
 	//CodeTokenError token 获取失败
 	CodeTokenError = 40002
+	// 超频
+	CodeOverClock = 40003
 )
 
 // CheckLogin 检查登录

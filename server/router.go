@@ -19,9 +19,11 @@ func NewRouter() *gin.Engine {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 	// 中间件, 顺序不能改
-	r.Use(middleware.Cors())
-	//r.Use(middleware.CurrentUser())
-	r.Use(middleware.GinLogger())
+	// cors zaplog time/rate
+	r.Use(middleware.Cors(),
+		middleware.GinLogger(),
+		middleware.Rate(),
+	)
 
 	// 路由
 	v1 := r.Group("/api/v1")
