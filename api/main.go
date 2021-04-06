@@ -15,6 +15,7 @@ import (
 	"go-api/util"
 	"golang.org/x/sync/singleflight"
 	"gopkg.in/go-playground/validator.v8"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -47,10 +48,10 @@ func CurrentUser(c *gin.Context) (*ent.User, error) {
 			if isExist(key) {
 				var d ent.User
 				var mj string
-				ml,ok:= cache.LocalCacheClient.Get(key)
+				ml, ok := cache.LocalCacheClient.Get(key)
 				if ok {
 					mj = ml.(string)
-					util.Log().Info("local %s",mj)
+					util.Log().Info("local %s", mj)
 				} else {
 					mj, _ = cache.RedisClient.Get(key).Result()
 				}
@@ -112,4 +113,20 @@ func TokenRefresh(c *gin.Context) (string, error) {
 		}
 	}
 	return "", errors.New("刷新失败")
+}
+
+func GetOssToken(c *gin.Context) {
+	o := util.NewOss()
+	o, err := o.Info(os.Getenv("OSS_UPDATE_DIR"))
+	if err != nil {
+		c.JSON(400, serializer.Response{
+			Error: err.Error(),
+		})
+	} else {
+		c.JSON(200, serializer.Response{
+			Code: 0,
+			Msg:  "",
+			Data: o,
+		})
+	}
 }
