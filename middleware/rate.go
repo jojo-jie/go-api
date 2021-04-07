@@ -9,11 +9,12 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	ur "go.uber.org/ratelimit"
 )
 
 var r, b int
 
-// 根据请求ip 限流
+// 令牌桶|楼桶根据请求ip 限流
 func Rate() gin.HandlerFunc {
 	r, _ = strconv.Atoi(os.Getenv("RATE_R"))
 	b, _ = strconv.Atoi(os.Getenv("RATE_B"))
@@ -27,6 +28,17 @@ func Rate() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		c.Next()
+	}
+}
+
+//漏桶
+func LRate() gin.HandlerFunc {
+	limiters := &sync.Map{}
+	return func(c *gin.Context) {
+		key:=c.ClientIP()
+		l, _ := limiters.LoadOrStore(key, ur.New(3))
+		l.(ur.Limiter).Take()
 		c.Next()
 	}
 }
