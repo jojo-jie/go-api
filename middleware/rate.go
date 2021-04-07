@@ -4,12 +4,12 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"go-api/serializer"
+	"go.uber.org/ratelimit"
 	"golang.org/x/time/rate"
 	"os"
 	"strconv"
 	"sync"
 	"time"
-	ur "go.uber.org/ratelimit"
 )
 
 var r, b int
@@ -37,8 +37,8 @@ func LRate() gin.HandlerFunc {
 	limiters := &sync.Map{}
 	return func(c *gin.Context) {
 		key:=c.ClientIP()
-		l, _ := limiters.LoadOrStore(key, ur.New(3))
-		l.(ur.Limiter).Take()
+		l, _ := limiters.LoadOrStore(key, ratelimit.New(3))
+		l.(ratelimit.Limiter).Take()
 		c.Next()
 	}
 }
