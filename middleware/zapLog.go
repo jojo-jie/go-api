@@ -41,7 +41,7 @@ func GinRecovery(logger *zap.Logger) gin.HandlerFunc {
 func NewZap()  {
 	var buf strings.Builder
 	buf.WriteString("logs/")
-	buf.WriteString(time.Now().Format("2006-01-02"))
+	buf.WriteString(time.Now().Format("2006-tool-02"))
 	buf.WriteString("_zap.log")
 	zf,_:=os.Create(buf.String())
 	writeSyncer:=zapcore.AddSync(zf)

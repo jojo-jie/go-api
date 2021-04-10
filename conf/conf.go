@@ -26,7 +26,7 @@ func Init() {
 	}
 
 	// http 请求日志
-	date := time.Now().Format("2006-01-02")
+	date := time.Now().Format("2006-tool-02")
 	logsDir := "./logs"
 	ret, err := util.PathExists(logsDir)
 	if err != nil {
