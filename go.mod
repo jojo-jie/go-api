@@ -18,6 +18,7 @@ require (
 	github.com/onsi/ginkgo v1.15.2 // indirect
 	github.com/onsi/gomega v1.11.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/spf13/cobra v1.1.3 // indirect
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.2.0
 	github.com/swaggo/swag v1.6.8
