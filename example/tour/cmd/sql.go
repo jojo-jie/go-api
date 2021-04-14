@@ -19,9 +19,7 @@ var sqlCmd = &cobra.Command{
 	Use:   "sql",
 	Short: "sql 转换和处理",
 	Long:  "sql 转换和处理",
-	Run: func(cmd *cobra.Command, args []string) {
-
-	},
+	Run: func(cmd *cobra.Command, args []string) {},
 }
 
 var sql2structCmd = &cobra.Command{
@@ -58,7 +56,7 @@ func init()  {
 	sqlCmd.AddCommand(sql2structCmd)
 	sql2structCmd.Flags().StringVarP(&username, "username", "","","请输入数据库账号")
 	sql2structCmd.Flags().StringVarP(&password, "password", "","","请输入数据库密码")
-	sql2structCmd.Flags().StringVarP(&host, "host", "","127.0.0.1:3307","请输入数据库HOST")
+	sql2structCmd.Flags().StringVarP(&host, "host", "","127.0.0.1:3306","请输入数据库HOST")
 	sql2structCmd.Flags().StringVarP(&charset, "charset", "","utf8mb4","请输入数据库的编码")
 	sql2structCmd.Flags().StringVarP(&dbType, "type", "","mysql","请输入数据库的实例类型")
 	sql2structCmd.Flags().StringVarP(&dbName, "db", "","mysql","请输入数据库的")

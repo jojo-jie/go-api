@@ -64,7 +64,8 @@ func (m *DbModel) GetColumns(dbName, tableName string) ([]*TableColumn, error) {
 	var columns []*TableColumn
 	for rows.Next() {
 		var column TableColumn
-		err := rows.Scan(&column.ColumnName, &column.ColumnType, &column.ColumnKey, &column.ColumnComment, &column.DataType, &column.IsNullAble)
+		// 与查询字段同序
+		err := rows.Scan(&column.ColumnName, &column.DataType, &column.ColumnKey, &column.IsNullAble,&column.ColumnType, &column.ColumnComment)
 		if err != nil {
 			return nil, err
 		}
