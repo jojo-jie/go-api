@@ -54,3 +54,9 @@ func(p *Person) SetAge(age int){
 func(p Person)GetAge()int{
 	return p.Age
 }
+
+func TestD(t *testing.T)  {
+	x:=int8(1) //-2^8~2^8-1
+	y:=x-127
+	t.Log(y)
+}
