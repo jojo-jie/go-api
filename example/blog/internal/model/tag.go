@@ -9,3 +9,7 @@ type Tag struct {
 func (a Tag) TableName() string {
 	return "blog_tag"
 }
+
+
+
+
