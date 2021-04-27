@@ -57,3 +57,7 @@ func setupDBEngine() error {
 	}
 	return nil
 }
+
+func setupLogger() error {
+	return nil
+}
