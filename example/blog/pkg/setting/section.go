@@ -15,6 +15,9 @@ type AppSettingS struct {
 	LogSavePath     string
 	LogFileName     string
 	LogFileExt      string
+	LogMaxSize      int
+	LogMaxAge       int
+	LogLocalTime    bool
 }
 
 type DataBaseSettingS struct {

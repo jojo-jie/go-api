@@ -9,6 +9,9 @@ App:
   LogSavePath: storage/logs
   LogFileName: app
   LogFileExt: .log
+  LogMaxSize: 600
+  LogMaxAge: 10
+  LogLocalTime: true
 DataBase:
   DBType: mysql
   Username: root
