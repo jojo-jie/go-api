@@ -37,3 +37,5 @@ func NewDBEngine(databaseSetting *setting.DataBaseSettingS) (*gorm.DB, error) {
 	db.DB().SetMaxOpenConns(databaseSetting.MaxOpenConns)
 	return db, nil
 }
+
+
