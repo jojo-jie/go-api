@@ -7,6 +7,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"time"
+	//otgorm "github.com/eddycjy/opentracing-gorm"
 )
 
 type Model struct {
@@ -15,6 +16,7 @@ type Model struct {
 	ModifiedBy string `json:"modified_by"`
 	CreatedOn  uint32 `json:"created_on"`
 	ModifiedOn uint32 `json:"modified_on"`
+	DeletedOn  uint32 `json:"deleted_on"`
 	IsDel      uint8  `json:"is_del"`
 }
 
@@ -34,14 +36,12 @@ func NewDBEngine(databaseSetting *setting.DataBaseSettingS) (*gorm.DB, error) {
 		db.LogMode(true)
 	}
 	db.SingularTable(true)
-	//注册回调行为
-	db.Callback().Create().Replace("gorm:update_time_stamp", updateTimeStampForUpdateCallBack)
-	db.Callback().Update().Replace("gorm:update_time_stamp", updateTimeStampForUpdateCallBack)
-	db.Callback().Delete().Replace("gorm:delete", deleteCallBack)
-
+	db.Callback().Create().Replace("gorm:update_time_stamp", updateTimeStampForCreateCallback)
+	db.Callback().Update().Replace("gorm:update_time_stamp", updateTimeStampForUpdateCallback)
+	db.Callback().Delete().Replace("gorm:delete", deleteCallback)
 	db.DB().SetMaxIdleConns(databaseSetting.MaxIdleConns)
 	db.DB().SetMaxOpenConns(databaseSetting.MaxOpenConns)
-
+	//otgorm.AddGormCallbacks(db)
 	return db, nil
 }
 
@@ -49,7 +49,7 @@ func NewDBEngine(databaseSetting *setting.DataBaseSettingS) (*gorm.DB, error) {
 func updateTimeStampForCreateCallback(scope *gorm.Scope) {
 	if !scope.HasError() {
 		nowTime := time.Now().Unix()
-		if createTimeField, ok := scope.FieldByName("CreateOn"); ok {
+		if createTimeField, ok := scope.FieldByName("CreatedOn"); ok {
 			if createTimeField.IsBlank {
 				_ = createTimeField.Set(nowTime)
 			}
@@ -64,20 +64,20 @@ func updateTimeStampForCreateCallback(scope *gorm.Scope) {
 }
 
 //更新行为回调
-func updateTimeStampForUpdateCallBack(scope *gorm.Scope) {
+func updateTimeStampForUpdateCallback(scope *gorm.Scope) {
 	if _, ok := scope.Get("gorm:update_column"); ok {
 		_ = scope.SetColumn("ModifiedOn", time.Now().Unix())
 	}
 }
 
 //删除行为回调
-func deleteCallBack(scope *gorm.Scope) {
+func deleteCallback(scope *gorm.Scope) {
 	if !scope.HasError() {
 		var extraOption string
 		if str, ok := scope.Get("gorm:delete_option"); ok {
 			extraOption = fmt.Sprint(str)
 		}
-		deleteOnField, hasDeleteOnField := scope.FieldByName("DeleteOn")
+		deleteOnField, hasDeleteOnField := scope.FieldByName("DeletedOn")
 		isDelField, hasIsDelField := scope.FieldByName("IsDel")
 		if !scope.Search.Unscoped && hasDeleteOnField && hasIsDelField {
 			now := time.Now().Unix()

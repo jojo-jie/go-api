@@ -15,7 +15,7 @@ func TestS(t *testing.T)  {
 
 	// jack是个接口，被一个指针对象赋值，下面的方法都可以正确执行
 	var jack Person  // 声明一个接口类型的对象
-	//jack = &Person{"jack", 10} // Person实现了接口
+	//jack := &Person{"jack", 10} // Person实现了接口
 	jack.SayHello()
 	jack.SetAge(20)
 	fmt.Println(jack.GetAge())
