@@ -114,5 +114,3 @@ func (t Tag) Delete(c *gin.Context) {
 	response.ToResponse(gin.H{})
 	return
 }
-
-
