@@ -12,6 +12,20 @@ App:
   LogMaxSize: 600
   LogMaxAge: 10
   LogLocalTime: true
+  UploadSavePath: storage/uploads
+  UploadServerUrl: http://127.0.0.1:4433/static
+  UploadImageMaxSize: 5
+  UploadImageAllowExts:
+    - .jpg
+    - .jpeg
+    - .png
+  UploadDocSavePath: storage/doc
+  UploadDocServerUrl: http://127.0.0.1:4433/doc
+  UploadDocMaxSize: 50
+  UploadDocAllowExts:
+    - .pdf
+    - .word
+    - .excel
 DataBase:
   DBType: mysql
   Username: root

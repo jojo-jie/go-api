@@ -1,9 +1,12 @@
 package routers
 
 import (
+	"blog/global"
 	"blog/internal/middleware"
+	"blog/internal/routers/api"
 	v1 "blog/internal/routers/api/v1"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 func NewRouter() *gin.Engine {
@@ -11,6 +14,11 @@ func NewRouter() *gin.Engine {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 	r.Use(middleware.Translations())
+	upload:=api.NewUpload()
+	r.POST("/upload/file", upload.UploadFile)
+	//文件服务只有提供静态资源的访问，才能在外部请求本项目HTTP Server时同时提供静态资源的访问
+	r.StaticFS("/static", http.Dir(global.AppSetting.UploadSavePath))
+	r.StaticFS("/doc", http.Dir(global.AppSetting.UploadDocSavePath))
 	apiv1 := r.Group("api/v1/")
 	{
 		tag := v1.NewTag()

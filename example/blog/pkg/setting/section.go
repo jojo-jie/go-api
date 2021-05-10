@@ -18,6 +18,14 @@ type AppSettingS struct {
 	LogMaxSize      int
 	LogMaxAge       int
 	LogLocalTime    bool
+	UploadSavePath string
+	UploadServerUrl string
+	UploadImageMaxSize int
+	UploadImageAllowExts []string
+	UploadDocSavePath string
+	UploadDocServerUrl string
+	UploadDocMaxSize int
+	UploadDocAllowExts []string
 }
 
 type DataBaseSettingS struct {

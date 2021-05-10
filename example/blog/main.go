@@ -43,10 +43,13 @@ func main() {
 }
 
 func setupSetting() error {
-	setting, err := setting.NewSetting()
-	err = setting.ReadSection("Server", &global.ServerSetting)
-	err = setting.ReadSection("App", &global.AppSetting)
-	err = setting.ReadSection("Database", &global.DatabaseSetting)
+	set, err := setting.NewSetting()
+	if err != nil {
+		return err
+	}
+	err = set.ReadSection("Server", &global.ServerSetting)
+	err = set.ReadSection("App", &global.AppSetting)
+	err = set.ReadSection("Database", &global.DatabaseSetting)
 	if err != nil {
 		return err
 	}
