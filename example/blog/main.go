@@ -6,6 +6,7 @@ import (
 	"blog/internal/routers"
 	"blog/pkg/logger"
 	"blog/pkg/setting"
+	"embed"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"log"
@@ -13,8 +14,11 @@ import (
 	"time"
 )
 
+//go:embed configs/*
+var configDirs embed.FS
+
 func init() {
-	err := setupSetting()
+	err := setupSetting(configDirs)
 	if err != nil {
 		log.Fatalf("init.setupSetting err: %v", err)
 	}
@@ -42,8 +46,8 @@ func main() {
 	s.ListenAndServe()
 }
 
-func setupSetting() error {
-	set, err := setting.NewSetting()
+func setupSetting(configDirs embed.FS) error {
+	set, err := setting.NewSetting(configDirs)
 	if err != nil {
 		return err
 	}

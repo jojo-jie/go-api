@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -23,7 +23,7 @@ func GinLogger() gin.HandlerFunc {
 			if err!=nil {
 				sugarLogger.Error(err)
 			}
-			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 			data = string(body)
 		}
 		sugarLogger.Infof("方法: %s, URL: %s, CODE: %d, body数据: %s",
