@@ -19,7 +19,9 @@ func NewRouter() *gin.Engine {
 	//文件服务只有提供静态资源的访问，才能在外部请求本项目HTTP Server时同时提供静态资源的访问
 	r.StaticFS("/static", http.Dir(global.AppSetting.UploadSavePath))
 	r.StaticFS("/doc", http.Dir(global.AppSetting.UploadDocSavePath))
+	r.GET("/auth", api.GetAuth)
 	apiv1 := r.Group("api/v1/")
+	apiv1.Use(middleware.JWT())
 	{
 		tag := v1.NewTag()
 		apiv1.POST("tags", tag.Create)

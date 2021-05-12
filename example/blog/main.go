@@ -54,11 +54,13 @@ func setupSetting(configDirs embed.FS) error {
 	err = set.ReadSection("Server", &global.ServerSetting)
 	err = set.ReadSection("App", &global.AppSetting)
 	err = set.ReadSection("Database", &global.DatabaseSetting)
+	err = set.ReadSection("JWT", &global.JWTSetting)
 	if err != nil {
 		return err
 	}
 	global.ServerSetting.ReadTimeOut *= time.Second
 	global.ServerSetting.WriteTimeOut *= time.Second
+	global.JWTSetting.Expire *= time.Second
 	return nil
 }
 
