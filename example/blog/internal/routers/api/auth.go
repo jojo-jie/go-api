@@ -30,7 +30,10 @@ func GetAuth(c *gin.Context) {
 		response.ToErrorResponse(errcode.UnauthorizedTokenGenerate)
 		return
 	}
+
+	appVersion, _ := c.Get("app_version")
 	response.ToResponse(gin.H{
-		"token": token,
+		"token":       token,
+		"app_version": appVersion,
 	})
 }

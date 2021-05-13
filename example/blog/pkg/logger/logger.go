@@ -113,7 +113,7 @@ func (l *Logger) JSONFormat(message string) map[string]interface{} {
 	data["callers"] = l.callers
 	if len(l.fields) > 0 {
 		for k, v := range l.fields {
-			if _, ok := data[k]; ok {
+			if _, ok := data[k]; !ok {
 				data[k] = v
 			}
 		}

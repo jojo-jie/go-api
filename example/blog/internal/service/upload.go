@@ -20,7 +20,6 @@ func (svc *Service) UploadFile(fileType upload.FileType, file multipart.File, fi
 	if !upload.CheckContainExt(fileType, fileName) {
 		return nil, errors.New("file suffix is not supported")
 	}
-	global.Logger.Info("dst:::",dst)
 	if upload.CheckSavePath(uploadSavePath) {
 		if err := upload.CreateSavePath(uploadSavePath, os.ModePerm); err != nil {
 			return nil, errors.New("failed to create save directory")

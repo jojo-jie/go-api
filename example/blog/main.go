@@ -55,6 +55,7 @@ func setupSetting(configDirs embed.FS) error {
 	err = set.ReadSection("App", &global.AppSetting)
 	err = set.ReadSection("Database", &global.DatabaseSetting)
 	err = set.ReadSection("JWT", &global.JWTSetting)
+	err = set.ReadSection("Email", &global.EmailSetting)
 	if err != nil {
 		return err
 	}

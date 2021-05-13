@@ -12,7 +12,9 @@ import (
 func NewRouter() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
+	r.Use(middleware.Recovery())
+	r.Use(middleware.AppInfo())
+	r.Use(middleware.AccessLog())
 	r.Use(middleware.Translations())
 	upload:=api.NewUpload()
 	r.POST("/upload/file", upload.UploadFile)
