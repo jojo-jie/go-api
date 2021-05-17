@@ -14,17 +14,16 @@ import (
 // 需要访问控制的route
 var methodLimiters limiter.LimiterIface
 
-func init()  {
-	rules:=make([]limiter.LimiterBucketRule, 1)
-	rules[0] = limiter.LimiterBucketRule{
+func init() {
+	rules := make([]limiter.LimiterBucketRule, 0)
+	rules = append(rules, limiter.LimiterBucketRule{
 		Key:          "/auth",
 		FillInterval: time.Second,
 		Capacity:     10,
 		Quantum:      10,
-	}
+	})
 	methodLimiters = limiter.NewMethodLimiter().AddBucket(rules...)
 }
-
 
 func NewRouter() *gin.Engine {
 	r := gin.New()
