@@ -10,22 +10,23 @@ type ServerSettingS struct {
 }
 
 type AppSettingS struct {
-	DefaultPageSize      int
-	MaxPageSize          int
-	LogSavePath          string
-	LogFileName          string
-	LogFileExt           string
-	LogMaxSize           int
-	LogMaxAge            int
-	LogLocalTime         bool
-	UploadSavePath       string
-	UploadServerUrl      string
-	UploadImageMaxSize   int
-	UploadImageAllowExts []string
-	UploadDocSavePath    string
-	UploadDocServerUrl   string
-	UploadDocMaxSize     int
-	UploadDocAllowExts   []string
+	DefaultPageSize       int
+	MaxPageSize           int
+	LogSavePath           string
+	LogFileName           string
+	LogFileExt            string
+	LogMaxSize            int
+	LogMaxAge             int
+	LogLocalTime          bool
+	UploadSavePath        string
+	UploadServerUrl       string
+	UploadImageMaxSize    int
+	UploadImageAllowExts  []string
+	UploadDocSavePath     string
+	UploadDocServerUrl    string
+	UploadDocMaxSize      int
+	UploadDocAllowExts    []string
+	DefaultContextTimeout time.Duration
 }
 
 type DataBaseSettingS struct {

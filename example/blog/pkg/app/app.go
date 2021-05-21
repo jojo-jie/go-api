@@ -23,21 +23,31 @@ func NewResponse(ctx *gin.Context) *Response {
 }
 
 func (r *Response) ToResponse(data interface{}) {
-	if data == nil {
-		data = gin.H{}
+	select {
+	case <-r.Ctx.Request.Context().Done():
+		r.ToErrorResponse(errcode.TimeOut)
+	default:
+		if data == nil {
+			data = gin.H{}
+		}
+		r.Ctx.JSON(http.StatusOK, data)
 	}
-	r.Ctx.JSON(http.StatusOK, data)
 }
 
 func (r *Response) ToResponseList(list interface{}, totalRow int) {
-	r.Ctx.JSON(http.StatusOK, gin.H{
-		"list": list,
-		"pager": Pager{
-			Page:      GetPage(r.Ctx),
-			PageSize:  GetPageSize(r.Ctx),
-			TotalRows: totalRow,
-		},
-	})
+	select {
+	case <-r.Ctx.Request.Context().Done():
+		r.ToErrorResponse(errcode.TimeOut)
+	default:
+		r.Ctx.JSON(http.StatusOK, gin.H{
+			"list": list,
+			"pager": Pager{
+				Page:      GetPage(r.Ctx),
+				PageSize:  GetPageSize(r.Ctx),
+				TotalRows: totalRow,
+			},
+		})
+	}
 }
 
 func (r *Response) ToErrorResponse(err *errcode.Error) {

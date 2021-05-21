@@ -60,3 +60,7 @@ func TestD(t *testing.T)  {
 	y:=x-127
 	t.Log(y)
 }
+
+func TestTime(t *testing.T)  {
+
+}

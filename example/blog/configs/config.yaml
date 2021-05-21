@@ -26,6 +26,7 @@ App:
     - .pdf
     - .word
     - .excel
+  DefaultContextTimeout: 1
 DataBase:
   DBType: mysql
   Username: root
@@ -47,7 +48,7 @@ Email:
   Username: 01@qq.com
   Password: xxxx
   IsSSL: true
-  From: 2725445401@qq.com
+  From: zzxx@qq.com
   To:
-    - 18624275868@163.com
+    - ccxxx@163.com
 

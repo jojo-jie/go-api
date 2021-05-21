@@ -62,6 +62,7 @@ func setupSetting(configDirs embed.FS) error {
 	global.ServerSetting.ReadTimeOut *= time.Second
 	global.ServerSetting.WriteTimeOut *= time.Second
 	global.JWTSetting.Expire *= time.Second
+	global.AppSetting.DefaultContextTimeout *= time.Second
 	return nil
 }
 
