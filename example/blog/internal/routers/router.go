@@ -40,6 +40,7 @@ func NewRouter() *gin.Engine {
 	r.Use(middleware.AccessLog())
 	r.Use(middleware.ContextTimeout(global.AppSetting.DefaultContextTimeout))
 	r.Use(middleware.Translations())
+	r.Use(middleware.Tracing())
 	upload := api.NewUpload()
 	r.POST("/upload/file", upload.UploadFile)
 	//文件服务只有提供静态资源的访问，才能在外部请求本项目HTTP Server时同时提供静态资源的访问
