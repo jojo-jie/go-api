@@ -4,10 +4,10 @@ import (
 	"blog/global"
 	"blog/pkg/setting"
 	"fmt"
+	otgorm "github.com/eddycjy/opentracing-gorm"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"time"
-	//otgorm "github.com/eddycjy/opentracing-gorm"
 )
 
 type Model struct {
@@ -41,7 +41,7 @@ func NewDBEngine(databaseSetting *setting.DataBaseSettingS) (*gorm.DB, error) {
 	db.Callback().Delete().Replace("gorm:delete", deleteCallback)
 	db.DB().SetMaxIdleConns(databaseSetting.MaxIdleConns)
 	db.DB().SetMaxOpenConns(databaseSetting.MaxOpenConns)
-	//otgorm.AddGormCallbacks(db)
+	otgorm.AddGormCallbacks(db)
 	return db, nil
 }
 

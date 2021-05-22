@@ -4,6 +4,7 @@ import "time"
 
 type ServerSettingS struct {
 	RunMode      string
+	ServiceName  string
 	HttpPort     string
 	ReadTimeOut  time.Duration
 	WriteTimeOut time.Duration
@@ -27,6 +28,7 @@ type AppSettingS struct {
 	UploadDocMaxSize      int
 	UploadDocAllowExts    []string
 	DefaultContextTimeout time.Duration
+	AgentHostPort         string
 }
 
 type DataBaseSettingS struct {

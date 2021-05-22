@@ -1,5 +1,6 @@
 Server:
   RunMode: debug
+  ServiceName: blog-server
   HttpPort: 4433
   ReadTimeout: 60
   WriteTimeout: 60
@@ -27,6 +28,7 @@ App:
     - .word
     - .excel
   DefaultContextTimeout: 1
+  AgentHostPort: 127.0.0.1:6831
 DataBase:
   DBType: mysql
   Username: root
