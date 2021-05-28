@@ -18,7 +18,7 @@ func Tracing() gin.HandlerFunc {
 			opentracing.HTTPHeadersCarrier(c.Request.Header),
 		)
 		if err != nil {
-			span, newCtx = opentracing.StartSpanFromContextWithTracer(c.Request.Context(), global.Tracer, c.Request.URL.Path)
+			span, newCtx = opentracing.StartSpanFromContextWithTracer(c.Request.Context(), global.Tracer, c.Request.URL.Path, opentracing.Tag{Key: string(ext.Component), Value: "HTTP"})
 		} else {
 			span, newCtx = opentracing.StartSpanFromContextWithTracer(c.Request.Context(), global.Tracer, c.Request.URL.Path, opentracing.ChildOf(spanCtx), opentracing.Tag{Key: string(ext.Component), Value: "HTTP"})
 		}

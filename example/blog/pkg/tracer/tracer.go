@@ -2,6 +2,7 @@ package tracer
 
 import (
 	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 	"io"
 	"time"
@@ -11,7 +12,7 @@ func NewJaegerTracer(serviceName, agentHostPort string) (opentracing.Tracer, io.
 	cfg := &config.Configuration{
 		ServiceName: serviceName,
 		Sampler: &config.SamplerConfig{
-			Type:  "const",
+			Type:  jaeger.SamplerTypeConst,
 			Param: 1,
 		},
 		Reporter: &config.ReporterConfig{
