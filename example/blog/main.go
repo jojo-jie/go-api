@@ -7,12 +7,25 @@ import (
 	"blog/pkg/logger"
 	"blog/pkg/setting"
 	"blog/pkg/tracer"
+	"context"
 	"embed"
+	"flag"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
+)
+
+var (
+	appName     string
+	isVersion   bool
+	buildTime   string
+	gitCommitID string
 )
 
 //go:embed configs/*
@@ -35,11 +48,17 @@ func init() {
 	if err != nil {
 		log.Fatalf("init.setupTracer err: %v", err)
 	}
-
+	setupFlag()
 }
 
 // 吸就完事了
 func main() {
+	if isVersion {
+		fmt.Printf("app_name: %s\n", appName)
+		fmt.Printf("build_version: %s\n", buildTime)
+		fmt.Printf("git_commit_id: %s\n", gitCommitID)
+	}
+
 	gin.SetMode(global.ServerSetting.RunMode)
 	router := routers.NewRouter()
 	s := &http.Server{
@@ -49,7 +68,25 @@ func main() {
 		WriteTimeout:   global.ServerSetting.WriteTimeOut,
 		MaxHeaderBytes: 1 << 20,
 	}
-	s.ListenAndServe()
+	go func() {
+		err := s.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("s.ListenAndServe err: %v", err)
+		}
+	}()
+
+	//等待中断信号
+	quit := make(chan os.Signal)
+	// 接收 syscall.SIGINT syscall.SIGTERM
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shuting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err:=s.Shutdown(ctx);err!=nil {
+		log.Fatal("Server forced to shutdown", err)
+	}
+	log.Println("Server exiting")
 }
 
 func setupSetting(configDirs embed.FS) error {
@@ -98,4 +135,9 @@ func setupTracer() error {
 	}
 	global.Tracer = jaegerTracer
 	return nil
+}
+
+func setupFlag() {
+	flag.BoolVar(&isVersion, "version", false, "编译信息")
+	flag.Parse()
 }
