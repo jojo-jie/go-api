@@ -3,6 +3,7 @@ package errcode
 import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	pb "tag-service/proto"
 )
 
 var (
@@ -18,8 +19,19 @@ var (
 	MethodNotAllowed = NewError(10000008, "不支持该方法")
 )
 
+type Status struct {
+	*status.Status
+}
+
+func Fr()  {
+	
+}
+
+
+
 func TogRPCError(err *Error) error {
-	s := status.New(ToRPCCode(err.code), err.msg)
+	pbErr := &pb.Error{Code: int32(err.Code()), Message: err.Msg()}
+	s, _ := status.New(ToRPCCode(err.Code()), err.Msg()).WithDetails(pbErr)
 	return s.Err()
 }
 
