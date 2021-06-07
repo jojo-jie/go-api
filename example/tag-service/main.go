@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -21,24 +22,14 @@ func init() {
 }
 
 func main() {
-	errs := make(chan error)
-
-	go func() {
-		err := RunHttpServer(httpPort)
-		if err != nil {
-			errs <- err
-		}
-	}()
-
-	go func() {
-		err := RunGrpcServer(grpcPort)
-		if err != nil {
-			errs <- err
-		}
-	}()
-
-	select {
-	case err := <-errs:
+	g := new(errgroup.Group)
+	g.Go(func() error {
+		return RunHttpServer(httpPort)
+	})
+	g.Go(func() error {
+		return RunGrpcServer(grpcPort)
+	})
+	if err := g.Wait(); err != nil {
 		log.Fatalf("Run server err:%v", err)
 	}
 }
