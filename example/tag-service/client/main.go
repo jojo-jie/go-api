@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"google.golang.org/grpc"
 	"log"
+	"tag-service/pkg/errcode"
 	pb "tag-service/proto"
 )
 
@@ -20,7 +21,12 @@ func main() {
 		Name: "Go",
 	})
 	if err != nil {
-		log.Fatalf("tagServiceClient.GetTagList err:%v", err)
+		err:=errcode.TogRPCError(errcode.ErrorGetTagListFail)
+		sts:= errcode.FromError(err)
+		details:=sts.Details()
+		detail := details[0].(*pb.Error)
+		// 客户端内部业务错误码
+		log.Fatalf("tagServiceClient.GetTagList err:%v code:%d msg:%s", details, detail.Code, detail.Message)
 	}
 	log.Printf("resp %v", resp)
 	body,_:=json.Marshal(resp)
