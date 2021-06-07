@@ -2,12 +2,14 @@ package main
 
 import (
 	"flag"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 	"net/http"
+	"tag-service/internal/middleware"
 	pb "tag-service/proto"
 	"tag-service/server"
 )
@@ -43,7 +45,16 @@ func RunHttpServer(port string) error {
 }
 
 func RunGrpcServer(port string) error {
-	s := grpc.NewServer()
+	opts := []grpc.ServerOption{
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			middleware.HelloInterceptor,
+			middleware.WorldInterceptor,
+			middleware.AccessLog,
+			middleware.ErrorLog,
+			middleware.Recovery,
+		)),
+	}
+	s := grpc.NewServer(opts...)
 	pb.RegisterTagServiceServer(s, server.NewTagServer())
 	//grpcurl -plaintext -d '{"name":"Go"}' localhost:6699 TagService.GetTagList
 	reflection.Register(s)
