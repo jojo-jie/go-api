@@ -23,16 +23,21 @@ type Status struct {
 	*status.Status
 }
 
-func Fr()  {
-	
+func FromError(err error) *Status {
+	s, _ := status.FromError(err)
+	return &Status{s}
 }
-
-
 
 func TogRPCError(err *Error) error {
 	pbErr := &pb.Error{Code: int32(err.Code()), Message: err.Msg()}
 	s, _ := status.New(ToRPCCode(err.Code()), err.Msg()).WithDetails(pbErr)
 	return s.Err()
+}
+
+func TogRPCStatus(code int, msg string) *Status {
+	pbErr := &pb.Error{Code: int32(code), Message: msg}
+	s, _ := status.New(ToRPCCode(code), msg).WithDetails(pbErr)
+	return &Status{s}
 }
 
 func ToRPCCode(code int) codes.Code {
