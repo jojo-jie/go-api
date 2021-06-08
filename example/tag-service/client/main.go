@@ -7,21 +7,42 @@ import (
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"tag-service/internal/middleware"
 	"tag-service/pkg/errcode"
 	pb "tag-service/proto"
 )
 
+type Auth struct {
+	AppKey    string
+	AppSecret string
+}
+
+func (a *Auth) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	return map[string]string{"app_key": a.AppKey, "app_secret": a.AppSecret}, nil
+}
+
+func (a *Auth) RequireTransportSecurity() bool {
+	return false
+}
+
 func main() {
+	auth := Auth{
+		AppKey:    "eddycjy1",
+		AppSecret: "go-programming-tour-book",
+	}
 	ctx := context.Background()
-	clientConn, err := GetClientConn(ctx, "localhost:6699", []grpc.DialOption{grpc.WithBlock()})
+	md := metadata.New(map[string]string{"go": "programming", "tour": "book"})
+	newCtx := metadata.NewOutgoingContext(ctx, md)
+	//newCtx:=metadata.AppendToOutgoingContext(ctx, "go", "programming")
+	clientConn, err := GetClientConn(newCtx, "localhost:6699", []grpc.DialOption{grpc.WithBlock(),grpc.WithPerRPCCredentials(&auth)})
 	if err != nil {
 		log.Fatalf("err: %v", err)
 	}
 	defer clientConn.Close()
 	tagServiceClient := pb.NewTagServiceClient(clientConn)
-	resp, err := tagServiceClient.GetTagList(ctx, &pb.GetTagListRequest{
+	resp, err := tagServiceClient.GetTagList(newCtx, &pb.GetTagListRequest{
 		Name: "Go",
 	})
 	if err != nil {
