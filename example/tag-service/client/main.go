@@ -29,14 +29,14 @@ func (a *Auth) RequireTransportSecurity() bool {
 
 func main() {
 	auth := Auth{
-		AppKey:    "eddycjy1",
+		AppKey:    "eddycjy",
 		AppSecret: "go-programming-tour-book",
 	}
 	ctx := context.Background()
 	md := metadata.New(map[string]string{"go": "programming", "tour": "book"})
 	newCtx := metadata.NewOutgoingContext(ctx, md)
 	//newCtx:=metadata.AppendToOutgoingContext(ctx, "go", "programming")
-	clientConn, err := GetClientConn(newCtx, "localhost:6699", []grpc.DialOption{grpc.WithBlock(),grpc.WithPerRPCCredentials(&auth)})
+	clientConn, err := GetClientConn(newCtx, "localhost:6699", []grpc.DialOption{grpc.WithBlock(), grpc.WithPerRPCCredentials(&auth)})
 	if err != nil {
 		log.Fatalf("err: %v", err)
 	}
@@ -65,14 +65,18 @@ func main() {
 func GetClientConn(ctx context.Context, target string, opt []grpc.DialOption) (*grpc.ClientConn, error) {
 	opts := append(opt, grpc.WithInsecure())
 	opts = append(opts, grpc.WithChainUnaryInterceptor(
-		grpc_middleware.ChainUnaryClient(middleware.UnaryContextTimeout(), grpc_retry.UnaryClientInterceptor(
-			grpc_retry.WithMax(2),
-			grpc_retry.WithCodes(
-				codes.Unknown,
-				codes.Internal,
-				codes.DeadlineExceeded,
+		grpc_middleware.ChainUnaryClient(
+			middleware.UnaryContextTimeout(),
+			middleware.ClientTracing(),
+			grpc_retry.UnaryClientInterceptor(
+				grpc_retry.WithMax(2),
+				grpc_retry.WithCodes(
+					codes.Unknown,
+					codes.Internal,
+					codes.DeadlineExceeded,
+				),
 			),
-		)),
+		),
 	))
 	opts = append(opts, grpc.WithChainStreamInterceptor(
 		grpc_middleware.ChainStreamClient(middleware.StreamContextTimeout()),

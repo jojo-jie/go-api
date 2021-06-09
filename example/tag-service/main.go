@@ -9,7 +9,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"tag-service/global"
 	"tag-service/internal/middleware"
+	"tag-service/pkg/tracer"
 	pb "tag-service/proto"
 	"tag-service/server"
 )
@@ -21,6 +23,11 @@ func init() {
 	flag.StringVar(&grpcPort, "grpc_port", "6699", "grpc启动端口号")
 	flag.StringVar(&httpPort, "http_port", "0033", "http启动端口号")
 	flag.Parse()
+
+	err := setupTracer()
+	if err != nil {
+		log.Fatalf("init.setupTracer err: %v\n", err)
+	}
 }
 
 func main() {
@@ -52,7 +59,9 @@ func RunGrpcServer(port string) error {
 			middleware.AccessLog,
 			middleware.ErrorLog,
 			middleware.Recovery,
+			middleware.ServerTracing,
 		)),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer()),
 	}
 	s := grpc.NewServer(opts...)
 	pb.RegisterTagServiceServer(s, server.NewTagServer())
@@ -63,4 +72,13 @@ func RunGrpcServer(port string) error {
 		return err
 	}
 	return s.Serve(lis)
+}
+
+func setupTracer() error {
+	jaegerTracer, _, err := tracer.NewJaegerTracer("tag-service", "127.0.0.1:6831")
+	if err != nil {
+		return err
+	}
+	global.Tracer = jaegerTracer
+	return nil
 }
