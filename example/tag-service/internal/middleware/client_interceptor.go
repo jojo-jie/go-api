@@ -15,7 +15,7 @@ func defaultContextTimeout(ctx context.Context) (context.Context, context.Cancel
 	var cancel context.CancelFunc
 	//ctx.Deadline() 检查是否设置时间
 	if _, ok := ctx.Deadline(); !ok {
-		defaultTimeout := 100 * time.Second
+		defaultTimeout := 1 * time.Second
 		ctx, cancel = context.WithTimeout(ctx, defaultTimeout)
 	}
 	return ctx, cancel
@@ -54,10 +54,9 @@ func ClientTracing() grpc.UnaryClientInterceptor {
 			opentracing.Tag{Key: string(ext.Component), Value: "grpc"},
 			ext.SpanKindRPCClient,
 		}...)
-		//此处有坑
 		span := global.Tracer.StartSpan(method, spanOpts...)
-		//此处有坑
-		defer span.Finish()
+		defer global.Closer.Close() //2 推出结束前发送agent
+		defer span.Finish() //1
 
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {

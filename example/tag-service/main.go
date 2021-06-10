@@ -26,7 +26,7 @@ func init() {
 
 	err := setupTracer()
 	if err != nil {
-		log.Fatalf("init.setupTracer err: %v\n", err)
+		log.Fatalf("tag-service init.setupTracer err: %v\n", err)
 	}
 }
 

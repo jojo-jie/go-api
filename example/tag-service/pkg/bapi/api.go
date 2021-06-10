@@ -50,9 +50,10 @@ func (a *API) httpGet(ctx context.Context, path string) ([]byte, error) {
 		Value: "HTTP",
 	})
 	span.SetTag("url", url)
+	//在jaeger-client-go库中也是通过类似的操作去传递信息, 它们叫:Tracer.Inject() 与 Tracer.Extract().
 	_ = opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	req = req.WithContext(newCtx)
-	client := http.Client{Timeout: time.Second * 60}
+	client := http.Client{Timeout: time.Second * 3}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
