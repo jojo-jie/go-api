@@ -56,7 +56,7 @@ func ClientTracing() grpc.UnaryClientInterceptor {
 		}...)
 		span := global.Tracer.StartSpan(method, spanOpts...)
 		defer global.Closer.Close() //2 推出结束前发送agent
-		defer span.Finish() //1
+		defer span.Finish() //1 关闭前确保推送到agent
 
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
