@@ -63,7 +63,7 @@ func (a *API) httpGet(ctx context.Context, path string) ([]byte, error) {
 	//当客户端发起http通信时候，当前进程调用Tracer.inject(…)注入当前活动的Span Context以及其他相关参数，通常客户端可以将该Span Context以 http 的 headers 参数(trace_id)的方式标识传递， 服务进程调用Tracer.extract(…)，从传入的请求的headers中抽取从上面注入的Span Context和参数还原上下文。
 	//原文链接：https://blog.csdn.net/pushiqiang/article/details/114449564
 	// = opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	finish(tracer.Inject())
+	finish(tracer.InjectHttp(), tracer.SetTag())
 	req = req.WithContext(newCtx)
 	client := http.Client{Timeout: time.Second * 3}
 	resp, err := client.Do(req)

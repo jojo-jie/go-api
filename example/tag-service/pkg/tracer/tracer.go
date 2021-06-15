@@ -39,10 +39,10 @@ func NewJaegerTracer(serviceName, agentHostPort string) (opentracing.Tracer, io.
 	return tracer, closer, nil
 }
 
-type SpanOption func(span opentracing.Span, r *http.Request)
+type SpanOption func(span opentracing.Span, r interface{})
 
 func SpanWithError(err error) SpanOption {
-	return func(span opentracing.Span, r *http.Request) {
+	return func(span opentracing.Span, r interface{}) {
 		if err != nil {
 			ext.Error.Set(span, true)
 			span.LogFields(log.String("event", "error"), log.String("msg", err.Error()))
@@ -51,14 +51,27 @@ func SpanWithError(err error) SpanOption {
 }
 
 func SpanWithLog(arg ...interface{}) SpanOption {
-	return func(span opentracing.Span, r *http.Request) {
+	return func(span opentracing.Span, r interface{}) {
 		span.LogKV(arg...)
 	}
 }
 
-func Inject() SpanOption {
-	return func(span opentracing.Span, r *http.Request) {
-		_ = opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+func InjectHttp() SpanOption {
+	return func(span opentracing.Span, r interface{}) {
+		if req, ok := r.(*http.Request); ok {
+			_ = opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+		}
+	}
+}
+
+// SetTag r map
+func SetTag() SpanOption {
+	return func(span opentracing.Span, r interface{}) {
+		if m, ok := r.(map[string]string); ok {
+			for k, v := range m {
+				span.SetTag(k, v)
+			}
+		}
 	}
 }
 
@@ -67,19 +80,21 @@ func Start(tracer opentracing.Tracer, spanName string, ctx context.Context, r in
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	// why not
-	tagV := "func"
-	var req *http.Request
-	req = r.(*http.Request)
-	tagV = req.Proto
+	// tag type
+	var tagV string
+	switch req := r.(type) {
+	case *http.Request:
+		tagV = req.Proto
+	default:
+		tagV = "func"
+	}
 	span, newCtx := opentracing.StartSpanFromContextWithTracer(ctx, tracer, spanName, opentracing.Tag{
 		Key:   string(ext.Component),
 		Value: tagV,
 	})
-	span.SetTag("url", req.URL)
 	finish = func(option ...SpanOption) {
 		for _, o := range option {
-			o(span, req)
+			o(span, r)
 		}
 		span.Finish()
 	}
