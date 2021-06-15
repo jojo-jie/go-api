@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"io"
 	"net/http"
+	"tag-service/pkg/tracer"
 	"time"
 )
 
@@ -47,11 +47,12 @@ func (a *API) httpGet(ctx context.Context, path string) ([]byte, error) {
 	}
 
 	//newCtx, finish:=tracer.Start(opentracing.GlobalTracer(), "HTTP GET: "+a.URL, ctx, req)
-	span, newCtx := opentracing.StartSpanFromContext(ctx, "HTTP GET: "+a.URL, opentracing.Tag{
+	/*span, newCtx := opentracing.StartSpanFromContext(ctx, "HTTP GET: "+a.URL, opentracing.Tag{
 		Key:   string(ext.Component),
 		Value: "HTTP",
 	})
-	span.SetTag("url", url)
+	span.SetTag("url", url)*/
+	newCtx, finish := tracer.Start(opentracing.GlobalTracer(), "HTTP GET: "+a.URL, ctx, req)
 
 	//在jaeger-client-go库中也是通过类似的操作去传递信息
 	//Inject 和 Extract 操作
@@ -61,7 +62,8 @@ func (a *API) httpGet(ctx context.Context, path string) ([]byte, error) {
 	//
 	//当客户端发起http通信时候，当前进程调用Tracer.inject(…)注入当前活动的Span Context以及其他相关参数，通常客户端可以将该Span Context以 http 的 headers 参数(trace_id)的方式标识传递， 服务进程调用Tracer.extract(…)，从传入的请求的headers中抽取从上面注入的Span Context和参数还原上下文。
 	//原文链接：https://blog.csdn.net/pushiqiang/article/details/114449564
-	_ = opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	// = opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	finish(tracer.Inject())
 	req = req.WithContext(newCtx)
 	client := http.Client{Timeout: time.Second * 3}
 	resp, err := client.Do(req)
@@ -69,7 +71,6 @@ func (a *API) httpGet(ctx context.Context, path string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	defer span.Finish()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

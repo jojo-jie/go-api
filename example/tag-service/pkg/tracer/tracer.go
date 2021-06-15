@@ -2,7 +2,6 @@ package tracer
 
 import (
 	"context"
-	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
@@ -44,11 +43,11 @@ type SpanOption func(span opentracing.Span, r *http.Request)
 
 func SpanWithError(err error) SpanOption {
 	return func(span opentracing.Span, r *http.Request) {
-		if err!=nil {
+		if err != nil {
 			ext.Error.Set(span, true)
 			span.LogFields(log.String("event", "error"), log.String("msg", err.Error()))
 		}
-	}	
+	}
 }
 
 func SpanWithLog(arg ...interface{}) SpanOption {
@@ -58,18 +57,18 @@ func SpanWithLog(arg ...interface{}) SpanOption {
 }
 
 func Inject() SpanOption {
-	fmt.Println("dddd")
 	return func(span opentracing.Span, r *http.Request) {
-		fmt.Println("ddddss")
 		_ = opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 	}
 }
+
 // Start 函数式选项模式 设置tracer span
 func Start(tracer opentracing.Tracer, spanName string, ctx context.Context, r interface{}) (newCtx context.Context, finish func(...SpanOption)) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	tagV:="func"
+	// why not
+	tagV := "func"
 	var req *http.Request
 	req = r.(*http.Request)
 	tagV = req.Proto
@@ -77,6 +76,7 @@ func Start(tracer opentracing.Tracer, spanName string, ctx context.Context, r in
 		Key:   string(ext.Component),
 		Value: tagV,
 	})
+	span.SetTag("url", req.URL)
 	finish = func(option ...SpanOption) {
 		for _, o := range option {
 			o(span, req)
