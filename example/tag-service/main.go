@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/coreos/etcd/clientv3"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -30,6 +31,8 @@ func init() {
 	}
 }
 
+const SERVICE_NAME = "tag-service"
+
 func main() {
 	g := new(errgroup.Group)
 	g.Go(func() error {
@@ -41,6 +44,12 @@ func main() {
 	if err := g.Wait(); err != nil {
 		log.Fatalf("Run server err:%v", err)
 	}
+}
+
+func RunEtcdServer() {
+	clientv3.New(clientv3.Config{
+		Endpoints:
+	})
 }
 
 func RunHttpServer(port string) error {
