@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3/naming"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
@@ -14,6 +17,7 @@ import (
 	"tag-service/pkg/errcode"
 	"tag-service/pkg/tracer"
 	pb "tag-service/proto"
+	"time"
 )
 
 type Auth struct {
@@ -44,8 +48,8 @@ func main() {
 	ctx := context.Background()
 	/*md := metadata.New(map[string]string{"go": "programming", "tour": "book"})
 	newCtx := metadata.NewOutgoingContext(ctx, md)*/
-	newCtx:=metadata.AppendToOutgoingContext(ctx, "go", "programming")
-	clientConn, err := GetClientConn(newCtx, "localhost:6699", []grpc.DialOption{grpc.WithBlock(), grpc.WithPerRPCCredentials(&auth)})
+	newCtx := metadata.AppendToOutgoingContext(ctx, "go", "programming")
+	clientConn, err := GetClientConn(newCtx, "tag-service", []grpc.DialOption{grpc.WithBlock(), grpc.WithPerRPCCredentials(&auth)})
 	if err != nil {
 		log.Fatalf("err: %v", err)
 	}
@@ -71,7 +75,7 @@ func main() {
 	log.Printf("resp %s", string(body))
 }
 
-func GetClientConn(ctx context.Context, target string, opt []grpc.DialOption) (*grpc.ClientConn, error) {
+func GetClientConn(ctx context.Context, serviceName string, opt []grpc.DialOption) (*grpc.ClientConn, error) {
 	opts := append(opt, grpc.WithInsecure())
 	opts = append(opts, grpc.WithChainUnaryInterceptor(
 		grpc_middleware.ChainUnaryClient(
@@ -90,6 +94,16 @@ func GetClientConn(ctx context.Context, target string, opt []grpc.DialOption) (*
 	opts = append(opts, grpc.WithChainStreamInterceptor(
 		grpc_middleware.ChainStreamClient(middleware.StreamContextTimeout()),
 	))
+	etcdClient, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{"http://localhost:2379"},
+		DialTimeout: time.Second * 60,
+	})
+	if err != nil {
+		return nil, err
+	}
+	r := &naming.GRPCResolver{Client: etcdClient}
+	target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", serviceName)
+	opts = append(opts, grpc.WithBalancer(grpc.RoundRobin(r)))
 	return grpc.DialContext(ctx, target, opts...)
 }
 

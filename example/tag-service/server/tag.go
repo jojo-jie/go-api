@@ -11,7 +11,6 @@ import (
 )
 
 type TagServer struct {
-	pb.UnimplementedTagServiceServer
 	auth *Auth
 }
 

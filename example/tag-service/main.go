@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/proxy/grpcproxy"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -15,6 +17,7 @@ import (
 	"tag-service/pkg/tracer"
 	pb "tag-service/proto"
 	"tag-service/server"
+	"time"
 )
 
 var grpcPort string
@@ -36,31 +39,25 @@ const SERVICE_NAME = "tag-service"
 func main() {
 	g := new(errgroup.Group)
 	g.Go(func() error {
-		return RunHttpServer(httpPort)
+		return RunHttpServer()
 	})
 	g.Go(func() error {
-		return RunGrpcServer(grpcPort)
+		return RunGrpcServer()
 	})
 	if err := g.Wait(); err != nil {
 		log.Fatalf("Run server err:%v", err)
 	}
 }
 
-func RunEtcdServer() {
-	clientv3.New(clientv3.Config{
-		Endpoints:
-	})
-}
-
-func RunHttpServer(port string) error {
+func RunHttpServer() error {
 	serveMux := http.NewServeMux()
 	serveMux.HandleFunc("/ping", func(writer http.ResponseWriter, request *http.Request) {
 		_, _ = writer.Write([]byte("pong"))
 	})
-	return http.ListenAndServe(":"+port, serveMux)
+	return http.ListenAndServe(":"+httpPort, serveMux)
 }
 
-func RunGrpcServer(port string) error {
+func RunGrpcServer() error {
 	opts := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			middleware.HelloInterceptor,
@@ -75,8 +72,20 @@ func RunGrpcServer(port string) error {
 	s := grpc.NewServer(opts...)
 	pb.RegisterTagServiceServer(s, server.NewTagServer())
 	//grpcurl -plaintext -d '{"name":"Go"}' localhost:6699 TagService.GetTagList
+	//protoc --go_out=plugins=grpc:. ./proto/*.proto
 	reflection.Register(s)
-	lis, err := net.Listen("tcp", ":"+port)
+	//服务注册
+	etcdClient, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{"http://localhost:2379"},
+		DialTimeout: time.Second * 60,
+	})
+	if err != nil {
+		return err
+	}
+	defer etcdClient.Close()
+	target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", SERVICE_NAME)
+	grpcproxy.Register(etcdClient, target, ":"+grpcPort, 60)
+	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		return err
 	}
