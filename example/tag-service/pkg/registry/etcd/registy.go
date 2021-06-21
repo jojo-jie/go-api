@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+var (
+	_ registry.Registrar = &Registry{}
+	_ registry.Discovery = &Registry{}
+)
+
 // Option is etcd registry option
 
 type Option func(o *options)
@@ -63,7 +68,7 @@ func New(client *clientv3.Client, opts ...Option) (r *Registry) {
 }
 
 func (r *Registry) Register(ctx context.Context, service *registry.ServiceInstance) error {
-	key := fmt.Sprintf("%s/%s/%s/%s", r.opts.namespace, service.Name, service.ID)
+	key := fmt.Sprintf("%s/%s/%s", r.opts.namespace, service.Name, service.ID)
 	value, err := marshal(service)
 	if err != nil {
 		return err
@@ -112,4 +117,26 @@ func (r *Registry) Deregister(ctx context.Context, service *registry.ServiceInst
 	key := fmt.Sprintf("%s/%s/%s", r.opts.namespace, service.Name, service.ID)
 	_, err := r.client.Delete(ctx, key)
 	return err
+}
+
+//GetService return the service instances in memory according to the service name.
+func (r *Registry) GetService(ctx context.Context, name string) ([]*registry.ServiceInstance, error) {
+	key := fmt.Sprintf("%s/%s", r.opts.namespace, name)
+	resp, err := r.kv.Get(ctx, key, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	var items []*registry.ServiceInstance
+	for _, kv := range resp.Kvs {
+		si, err := unmarshal(kv.Value)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, si)
+	}
+	return items, nil
+}
+
+func (r *Registry) Watch(ctx context.Context, serviceName string) (registry.Watcher, error) {
+	panic("implement me")
 }
