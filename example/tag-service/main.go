@@ -1,10 +1,9 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
 	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/proxy/grpcproxy"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -14,6 +13,8 @@ import (
 	"net/http"
 	"tag-service/global"
 	"tag-service/internal/middleware"
+	"tag-service/pkg/registry"
+	"tag-service/pkg/registry/etcd"
 	"tag-service/pkg/tracer"
 	pb "tag-service/proto"
 	"tag-service/server"
@@ -27,7 +28,6 @@ func init() {
 	flag.StringVar(&grpcPort, "grpc_port", "6699", "grpc启动端口号")
 	flag.StringVar(&httpPort, "http_port", "0033", "http启动端口号")
 	flag.Parse()
-
 	err := setupTracer()
 	if err != nil {
 		log.Fatalf("tag-service init.setupTracer err: %v\n", err)
@@ -54,7 +54,11 @@ func RunHttpServer() error {
 	serveMux.HandleFunc("/ping", func(writer http.ResponseWriter, request *http.Request) {
 		_, _ = writer.Write([]byte("pong"))
 	})
-	return http.ListenAndServe(":"+httpPort, serveMux)
+	s := &http.Server{
+		Addr:    ":" + httpPort,
+		Handler: serveMux,
+	}
+	return s.ListenAndServe()
 }
 
 func RunGrpcServer() error {
@@ -83,12 +87,30 @@ func RunGrpcServer() error {
 		return err
 	}
 	defer etcdClient.Close()
-	target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", SERVICE_NAME)
-	grpcproxy.Register(etcdClient, target, ":"+grpcPort, 60)
+	etcdOpts := []etcd.Option{
+		etcd.RegisterTTl(60 * time.Second),
+		etcd.Namespace("/etcdv3://go-programming-tour"),
+	}
+	//服务注册
+	r := etcd.New(etcdClient, etcdOpts...)
+	err = r.Register(context.Background(), &registry.ServiceInstance{
+		Name: "grpc",
+		ID:   SERVICE_NAME,
+	})
+	if err != nil {
+		return err
+	}
+	defer r.Deregister(context.Background(), &registry.ServiceInstance{
+		Name: "grpc",
+		ID:   SERVICE_NAME,
+	})
+	/*target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", SERVICE_NAME)
+	grpcproxy.Register(etcdClient, target, ":"+grpcPort, 60)*/
 	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		return err
 	}
+	defer lis.Close()
 	return s.Serve(lis)
 }
 
