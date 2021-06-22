@@ -104,6 +104,7 @@ func RunGrpcServer() error {
 		Name: "grpc",
 		ID:   SERVICE_NAME,
 	})
+
 	/*target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", SERVICE_NAME)
 	grpcproxy.Register(etcdClient, target, ":"+grpcPort, 60)*/
 	lis, err := net.Listen("tcp", ":"+grpcPort)

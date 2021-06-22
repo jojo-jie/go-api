@@ -137,6 +137,7 @@ func (r *Registry) GetService(ctx context.Context, name string) ([]*registry.Ser
 	return items, nil
 }
 
-func (r *Registry) Watch(ctx context.Context, serviceName string) (registry.Watcher, error) {
-	panic("implement me")
+func (r *Registry) Watch(ctx context.Context, name string) (registry.Watcher, error) {
+	key := fmt.Sprintf("%s/%s", r.opts.namespace, name)
+	return newWatcher(ctx, key, r.client), nil
 }

@@ -103,7 +103,7 @@ func GetClientConn(ctx context.Context, serviceName string, opt []grpc.DialOptio
 	}
 	r := &naming.GRPCResolver{Client: etcdClient}
 	target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", serviceName)
-	opts = append(opts, grpc.WithBalancer(grpc.RoundRobin(r)))
+	opts = append(opts, grpc.WithBlock(), grpc.WithBalancer(grpc.RoundRobin(r)))
 	return grpc.DialContext(ctx, target, opts...)
 }
 
