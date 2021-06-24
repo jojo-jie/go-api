@@ -94,8 +94,9 @@ func RunGrpcServer() error {
 	//服务注册
 	r := etcd.New(etcdClient, etcdOpts...)
 	err = r.Register(context.Background(), &registry.ServiceInstance{
-		Name: "grpc",
-		ID:   SERVICE_NAME,
+		Name:      "grpc",
+		ID:        SERVICE_NAME,
+		Endpoints: []string{"grpc://127.0.0.1:" + grpcPort},
 	})
 	if err != nil {
 		return err

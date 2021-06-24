@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	/*"fmt"
 	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/naming"
+	"github.com/coreos/etcd/clientv3/naming"*/
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
@@ -17,7 +17,7 @@ import (
 	"tag-service/pkg/errcode"
 	"tag-service/pkg/tracer"
 	pb "tag-service/proto"
-	"time"
+	//"time"
 )
 
 type Auth struct {
@@ -94,7 +94,7 @@ func GetClientConn(ctx context.Context, serviceName string, opt []grpc.DialOptio
 	opts = append(opts, grpc.WithChainStreamInterceptor(
 		grpc_middleware.ChainStreamClient(middleware.StreamContextTimeout()),
 	))
-	etcdClient, err := clientv3.New(clientv3.Config{
+	/*etcdClient, err := clientv3.New(clientv3.Config{
 		Endpoints:   []string{"http://localhost:2379"},
 		DialTimeout: time.Second * 60,
 	})
@@ -103,8 +103,8 @@ func GetClientConn(ctx context.Context, serviceName string, opt []grpc.DialOptio
 	}
 	r := &naming.GRPCResolver{Client: etcdClient}
 	target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", serviceName)
-	opts = append(opts, grpc.WithBlock(), grpc.WithBalancer(grpc.RoundRobin(r)))
-	return grpc.DialContext(ctx, target, opts...)
+	opts = append(opts, grpc.WithBlock(), grpc.WithBalancer(grpc.RoundRobin(r)))*/
+	return grpc.DialContext(ctx, "127.0.0.1:6699", opts...)
 }
 
 func setupTracer() error {
