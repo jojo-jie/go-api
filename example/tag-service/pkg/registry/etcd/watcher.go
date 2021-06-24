@@ -18,15 +18,18 @@ type watcher struct {
 	ch        clientv3.WatchChan
 }
 
-func newWatcher(ctx context.Context, key string, client *clientv3.Client) *watcher {
+func newWatcher(ctx context.Context, key string, client *clientv3.Client) (*watcher, error) {
 	w := &watcher{
 		key:     key,
 		watcher: clientv3.NewWatcher(client),
 	}
 	w.ctx, w.cancel = context.WithCancel(ctx)
 	w.watchChan = w.watcher.Watch(w.ctx, key, clientv3.WithPrefix(), clientv3.WithRev(0))
-	w.watcher.RequestProgress(context.Background())
-	return w
+	err := w.watcher.RequestProgress(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return w, nil
 }
 
 func (w *watcher) Next() ([]*registry.ServiceInstance, error) {

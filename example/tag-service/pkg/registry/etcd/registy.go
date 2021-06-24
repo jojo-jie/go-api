@@ -139,5 +139,5 @@ func (r *Registry) GetService(ctx context.Context, name string) ([]*registry.Ser
 
 func (r *Registry) Watch(ctx context.Context, name string) (registry.Watcher, error) {
 	key := fmt.Sprintf("%s/%s", r.opts.namespace, name)
-	return newWatcher(ctx, key, r.client), nil
+	return newWatcher(ctx, key, r.client)
 }
