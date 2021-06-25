@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/coreos/etcd/clientv3"
-	"google.golang.org/grpc/resolver"
 	"log"
 	"tag-service/pkg/registry"
 	"time"
@@ -48,22 +47,6 @@ type Registry struct {
 	client *clientv3.Client
 	kv     clientv3.KV
 	lease  clientv3.Lease
-}
-
-func (r *Registry) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
-	panic("implement me")
-}
-
-func (r *Registry) Scheme() string {
-	panic("implement me")
-}
-
-func (r *Registry) ResolveNow(option resolver.ResolveNowOptions) {
-	panic("implement me")
-}
-
-func (r *Registry) Close() {
-	panic("implement me")
 }
 
 func New(client *clientv3.Client, opts ...Option) (r *Registry) {
