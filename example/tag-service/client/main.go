@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/naming"
-	"time"
-
+	"google.golang.org/grpc/resolver"
+	"tag-service/pkg/balance"
 	/*"fmt"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/naming"*/
@@ -99,16 +97,13 @@ func GetClientConn(ctx context.Context, serviceName string, opt []grpc.DialOptio
 	opts = append(opts, grpc.WithChainStreamInterceptor(
 		grpc_middleware.ChainStreamClient(middleware.StreamContextTimeout()),
 	))
-	etcdClient, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"http://localhost:2379"},
-		DialTimeout: time.Second * 60,
-	})
+	discovery, err := balance.NewServiceDiscovery([]string{"http://localhost:2379"})
 	if err != nil {
 		return nil, err
 	}
-	r := &naming.GRPCResolver{Client: etcdClient}
-	target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", serviceName)
-	opts = append(opts, grpc.WithBlock(), grpc.WithBalancer(grpc.RoundRobin(r)))
+	resolver.Register(discovery)
+	target := fmt.Sprintf("%s:///%s", discovery.Scheme(), serviceName)
+	opts = append(opts, grpc.WithBlock(), grpc.WithBalancerName(grpc.PickFirstBalancerName))
 	return grpc.DialContext(ctx, target, opts...)
 }
 

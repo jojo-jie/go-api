@@ -19,6 +19,10 @@ type ServiceDiscovery struct {
 	lock        sync.Mutex
 }
 
+func (s *ServiceDiscovery) Name() string {
+	panic("implement me")
+}
+
 // Build 为给定目标创建一个新的`resolver`，当调用`grpc.Dial()`时执行
 func (s *ServiceDiscovery) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOption) (resolver.Resolver, error) {
 	log.Println("Build")
@@ -39,7 +43,7 @@ func (s *ServiceDiscovery) Build(target resolver.Target, cc resolver.ClientConn,
 }
 
 func (s *ServiceDiscovery) Scheme() string {
-	panic("implement me")
+	return schema
 }
 
 func (s *ServiceDiscovery) ResolveNow(options resolver.ResolveNowOptions) {

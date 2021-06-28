@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"github.com/coreos/etcd/clientv3"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -13,12 +11,10 @@ import (
 	"net/http"
 	"tag-service/global"
 	"tag-service/internal/middleware"
-	"tag-service/pkg/registry"
-	"tag-service/pkg/registry/etcd"
+	"tag-service/pkg/balance"
 	"tag-service/pkg/tracer"
 	pb "tag-service/proto"
 	"tag-service/server"
-	"time"
 )
 
 var grpcPort string
@@ -78,34 +74,11 @@ func RunGrpcServer() error {
 	//grpcurl -plaintext -d '{"name":"Go"}' localhost:6699 TagService.GetTagList
 	//protoc --go_out=plugins=grpc:. ./proto/*.proto
 	reflection.Register(s)
-	//服务注册
-	etcdClient, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"http://localhost:2379"},
-		DialTimeout: time.Second * 60,
-	})
+	ser,err:=balance.NewServiceRegister([]string{"http://localhost:2379"}, SERVICE_NAME, "localhost:"+grpcPort, 5)
 	if err != nil {
 		return err
 	}
-	defer etcdClient.Close()
-	etcdOpts := []etcd.Option{
-		etcd.RegisterTTl(60 * time.Second),
-		etcd.Namespace("/etcdv3://go-programming-tour"),
-	}
-	//服务注册
-	r := etcd.New(etcdClient, etcdOpts...)
-	err = r.Register(context.Background(), &registry.ServiceInstance{
-		Name:      "grpc",
-		ID:        SERVICE_NAME,
-		Endpoints: []string{"grpc://127.0.0.1:" + grpcPort},
-	})
-	if err != nil {
-		return err
-	}
-	defer r.Deregister(context.Background(), &registry.ServiceInstance{
-		Name: "grpc",
-		ID:   SERVICE_NAME,
-	})
-
+	defer ser.Close()
 	/*target := fmt.Sprintf("/etcdv3://go-programming-tour/grpc/%s", SERVICE_NAME)
 	grpcproxy.Register(etcdClient, target, ":"+grpcPort, 60)*/
 	lis, err := net.Listen("tcp", ":"+grpcPort)
