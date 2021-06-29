@@ -6,7 +6,10 @@ import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"google.golang.org/grpc/resolver"
 	"log"
+	"strconv"
+	"strings"
 	"sync"
+	"tag-service/pkg/weight"
 	"time"
 )
 
@@ -15,8 +18,10 @@ const schema = "grpclb"
 type ServiceDiscovery struct {
 	cli         *clientv3.Client //etcd client
 	cc          resolver.ClientConn
-	serviceList map[string]resolver.Address
+	serviceList sync.Map
 	lock        sync.Mutex
+	prefix      string // 监视前缀
+	lbName      string
 }
 
 func (s *ServiceDiscovery) Name() string {
@@ -24,21 +29,20 @@ func (s *ServiceDiscovery) Name() string {
 }
 
 // Build 为给定目标创建一个新的`resolver`，当调用`grpc.Dial()`时执行
-func (s *ServiceDiscovery) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOption) (resolver.Resolver, error) {
+func (s *ServiceDiscovery) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	log.Println("Build")
 	s.cc = cc
-	s.serviceList = make(map[string]resolver.Address)
-	prefix := "/" + target.Scheme + "/" + target.Endpoint + "/"
+	s.prefix = "/" + target.Scheme + "/" + target.Endpoint + "/"
 	//根据前缀获取现有的key
-	resp, err := s.cli.Get(context.Background(), prefix, clientv3.WithPrefix())
+	resp, err := s.cli.Get(context.Background(), s.prefix, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
 	for _, ev := range resp.Kvs {
 		s.SetServiceList(string(ev.Key), string(ev.Value))
 	}
-	s.cc.NewAddress(s.getServices())
-	go s.watcher(prefix)
+	s.cc.UpdateState(resolver.State{Addresses: s.getServices()})
+	go s.watcher()
 	return s, nil
 }
 
@@ -56,7 +60,7 @@ func (s *ServiceDiscovery) Close() {
 }
 
 // NewServiceDiscovery 新建服务发现
-func NewServiceDiscovery(endpoints []string) (resolver.Builder, error) {
+func NewServiceDiscovery(endpoints []string, lbName string) (resolver.Builder, error) {
 	client, err := clientv3.New(clientv3.Config{
 		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
@@ -66,13 +70,14 @@ func NewServiceDiscovery(endpoints []string) (resolver.Builder, error) {
 	}
 	return &ServiceDiscovery{
 		cli: client,
+		lbName: lbName,
 	}, nil
 }
 
 // watcher 监听前缀
-func (s *ServiceDiscovery) watcher(prefix string) {
-	rch := s.cli.Watch(context.Background(), prefix, clientv3.WithPrefix())
-	log.Printf("watching prefix:%s now...", prefix)
+func (s *ServiceDiscovery) watcher() {
+	rch := s.cli.Watch(context.Background(), s.prefix, clientv3.WithPrefix())
+	log.Printf("watching prefix:%s now...", s.prefix)
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
 			switch ev.Type {
@@ -89,23 +94,34 @@ func (s *ServiceDiscovery) watcher(prefix string) {
 func (s *ServiceDiscovery) SetServiceList(key, val string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.serviceList[key] = resolver.Address{Addr: val}
-	s.cc.NewAddress(s.getServices())
-	log.Println("put key :", key, "val :", val)
+	//获取服务地址
+	addr:=resolver.Address{Addr: strings.TrimPrefix(key, s.prefix)}
+	if s.lbName == weight.Name {
+		//获取服务地址权重
+		nodeWeight, err := strconv.Atoi(val)
+		if err != nil {
+			nodeWeight = 1
+		}
+		addr = weight.SetAddrInfo(addr,weight.AddrInfo{Weight: nodeWeight})
+	}
+	s.serviceList.Store(key, addr)
+	s.cc.UpdateState(resolver.State{Addresses: s.getServices()})
+	log.Println("put key :", key, "val :", addr)
 }
 
 func (s *ServiceDiscovery) DelServiceList(key string) {
 	s.lock.Lock()
 	defer s.lock.Lock()
-	delete(s.serviceList, key)
-	s.cc.NewAddress(s.getServices())
+	s.serviceList.Delete(key)
+	s.cc.UpdateState(resolver.State{Addresses: s.getServices()})
 	log.Println("del key:", key)
 }
 
 func (s *ServiceDiscovery) getServices() []resolver.Address {
-	addrs := make([]resolver.Address, 0, len(s.serviceList))
-	for _, address := range s.serviceList {
-		addrs = append(addrs, address)
-	}
+	addrs := make([]resolver.Address, 0, 10)
+	s.serviceList.Range(func(key, value interface{}) bool {
+		addrs = append(addrs, value.(resolver.Address))
+		return true
+	})
 	return addrs
 }

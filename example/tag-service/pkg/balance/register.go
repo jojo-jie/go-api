@@ -2,8 +2,12 @@ package balance
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"github.com/coreos/etcd/clientv3"
+	"google.golang.org/grpc/balancer/roundrobin"
 	"log"
+	"tag-service/pkg/weight"
 	"time"
 )
 
@@ -16,14 +20,22 @@ type ServiceRegister struct {
 	key       string
 	value     string
 	ctx       context.Context
+	lbInfo    map[string]interface{} // round_robin weight {"LoadBalancingPolicy": "%s", "weight": "1"}
 }
 
+
+
 // NewServiceRegister 新建注册服务
-func NewServiceRegister(endpoints []string, serName string, addr string, lease int64) (*ServiceRegister, error) {
+func NewServiceRegister(endpoints []string, serName string, addr string, lease int64, lbInfo string) (*ServiceRegister, error) {
 	client, err := clientv3.New(clientv3.Config{
 		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
 	})
+	if err != nil {
+		return nil, err
+	}
+	mm:=make(map[string]interface{},2)
+	err = json.Unmarshal([]byte(lbInfo), &mm)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +44,9 @@ func NewServiceRegister(endpoints []string, serName string, addr string, lease i
 		key:   "/" + schema + "/" + serName + "/" + addr,
 		value: addr,
 		ctx:   context.Background(),
+		lbInfo: mm,
 	}
+
 	if err := ser.putKeyWithLease(lease); err != nil {
 		return nil, err
 	}
@@ -47,7 +61,14 @@ func (s *ServiceRegister) putKeyWithLease(lease int64) error {
 		return err
 	}
 	//注册服务并绑定租约
-	_, err = s.cli.Put(s.ctx, s.key, s.value, clientv3.WithLease(grant.ID))
+	switch s.lbInfo["LoadBalancingPolicy"] {
+	case roundrobin.Name:
+		_, err = s.cli.Put(s.ctx, s.key, s.value, clientv3.WithLease(grant.ID))
+	case weight.Name:
+		_, err = s.cli.Put(s.ctx, s.key, s.lbInfo["weight"].(string), clientv3.WithLease(grant.ID))
+	default:
+		return errors.New("未知负载类型" + s.lbInfo["LoadBalancingPolicy"].(string))
+	}
 	if err != nil {
 		return err
 	}
@@ -70,11 +91,9 @@ func (s *ServiceRegister) ListenLeaseRespChan() {
 
 // Close 关闭租约
 func (s *ServiceRegister) Close() error {
-	if _,err:=s.cli.Revoke(s.ctx, s.leaseId);err!=nil {
+	if _, err := s.cli.Revoke(s.ctx, s.leaseId); err != nil {
 		return err
 	}
 	log.Println("撤销租约")
 	return s.cli.Close()
 }
-
-

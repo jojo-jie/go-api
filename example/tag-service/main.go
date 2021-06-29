@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -13,6 +14,7 @@ import (
 	"tag-service/internal/middleware"
 	"tag-service/pkg/balance"
 	"tag-service/pkg/tracer"
+	"tag-service/pkg/weight"
 	pb "tag-service/proto"
 	"tag-service/server"
 )
@@ -74,7 +76,7 @@ func RunGrpcServer() error {
 	//grpcurl -plaintext -d '{"name":"Go"}' localhost:6699 TagService.GetTagList
 	//protoc --go_out=plugins=grpc:. ./proto/*.proto
 	reflection.Register(s)
-	ser,err:=balance.NewServiceRegister([]string{"http://localhost:2379"}, SERVICE_NAME, "localhost:"+grpcPort, 5)
+	ser,err:=balance.NewServiceRegister([]string{"http://localhost:2379"}, SERVICE_NAME, "localhost:"+grpcPort, 5, fmt.Sprintf(`{"LoadBalancingPolicy": "%s","weight":"%s"}`, weight.Name,"2"))
 	if err != nil {
 		return err
 	}

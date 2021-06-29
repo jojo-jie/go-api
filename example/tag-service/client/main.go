@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/grpc/encoding/gzip"
 	"google.golang.org/grpc/resolver"
 	"tag-service/pkg/balance"
+	"tag-service/pkg/weight"
+
 	/*"fmt"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/naming"*/
@@ -97,13 +100,15 @@ func GetClientConn(ctx context.Context, serviceName string, opt []grpc.DialOptio
 	opts = append(opts, grpc.WithChainStreamInterceptor(
 		grpc_middleware.ChainStreamClient(middleware.StreamContextTimeout()),
 	))
-	discovery, err := balance.NewServiceDiscovery([]string{"http://localhost:2379"})
+	discovery, err := balance.NewServiceDiscovery([]string{"http://localhost:2379"}, weight.Name)
 	if err != nil {
 		return nil, err
 	}
 	resolver.Register(discovery)
 	target := fmt.Sprintf("%s:///%s", discovery.Scheme(), serviceName)
-	opts = append(opts, grpc.WithBlock(), grpc.WithBalancerName(grpc.PickFirstBalancerName))
+	//设置压缩方式
+	grpc.UseCompressor(gzip.Name)
+	opts = append(opts, grpc.WithBlock(), grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, weight.Name)))
 	return grpc.DialContext(ctx, target, opts...)
 }
 
