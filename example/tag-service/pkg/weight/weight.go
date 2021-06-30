@@ -59,7 +59,6 @@ type rrPickerBuilder struct{}
 
 func (*rrPickerBuilder) Build(info base.PickerBuildInfo) balancer.V2Picker {
 	log.Printf("weightPicker: newPicker called with info: %+v", info)
-	log.Printf("=====%+v",info.ReadySCs)
 	if len(info.ReadySCs) == 0 {
 		return base.NewErrPickerV2(balancer.ErrNoSubConnAvailable)
 	}
