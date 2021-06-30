@@ -88,6 +88,7 @@ func (s *ServiceDiscovery) watcher() {
 			}
 		}
 	}
+	log.Printf("watching prefix:==%s now...", s.prefix)
 }
 
 // SetServiceList 设置新的服务地址
@@ -106,7 +107,7 @@ func (s *ServiceDiscovery) SetServiceList(key, val string) {
 	}
 	s.serviceList.Store(key, addr)
 	s.cc.UpdateState(resolver.State{Addresses: s.getServices()})
-	log.Println("put key :", key, "val :", addr)
+	log.Println("put key :", key, "val :", addr, "all:", s.getServices())
 }
 
 func (s *ServiceDiscovery) DelServiceList(key string) {

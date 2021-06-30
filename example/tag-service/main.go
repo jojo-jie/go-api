@@ -1,15 +1,18 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"tag-service/global"
 	"tag-service/internal/middleware"
 	"tag-service/pkg/balance"
@@ -21,10 +24,12 @@ import (
 
 var grpcPort string
 var httpPort string
+var w string
 
 func init() {
 	flag.StringVar(&grpcPort, "grpc_port", "6699", "grpc启动端口号")
 	flag.StringVar(&httpPort, "http_port", "0033", "http启动端口号")
+	flag.StringVar(&w, "w", "0", "负载均衡权重0~5")
 	flag.Parse()
 	err := setupTracer()
 	if err != nil {
@@ -76,7 +81,19 @@ func RunGrpcServer() error {
 	//grpcurl -plaintext -d '{"name":"Go"}' localhost:6699 TagService.GetTagList
 	//protoc --go_out=plugins=grpc:. ./proto/*.proto
 	reflection.Register(s)
-	ser,err:=balance.NewServiceRegister([]string{"http://localhost:2379"}, SERVICE_NAME, "localhost:"+grpcPort, 5, fmt.Sprintf(`{"LoadBalancingPolicy": "%s","weight":"%s"}`, weight.Name,"2"))
+	atoi, err := strconv.Atoi(w)
+	if err != nil {
+		return err
+	}
+	if atoi < 0 || atoi > 5 {
+		return errors.New(fmt.Sprintf("错误权重w %d", atoi))
+	}
+	var ser *balance.ServiceRegister
+	if atoi == 0 {
+		ser, err = balance.NewServiceRegister([]string{"http://localhost:2379"}, SERVICE_NAME, "localhost:"+grpcPort, 5, fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, roundrobin.Name))
+	} else {
+		ser, err = balance.NewServiceRegister([]string{"http://localhost:2379"}, SERVICE_NAME, "localhost:"+grpcPort, 5, fmt.Sprintf(`{"LoadBalancingPolicy": "%s","weight":"%s"}`, weight.Name, w))
+	}
 	if err != nil {
 		return err
 	}

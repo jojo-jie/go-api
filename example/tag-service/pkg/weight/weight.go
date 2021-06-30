@@ -1,16 +1,18 @@
 package weight
 
 import (
+	"fmt"
+	"log"
 	"math/rand"
 	"sync"
 
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/resolver"
 )
 
+// Name 自定义负载均衡策略 https://bingjian-zhu.github.io/2020/05/20/gRPC负载均衡（自定义负载均衡策略）/
 // Name is the name of weight balancer.
 const Name = "weight"
 
@@ -31,6 +33,7 @@ type AddrInfo struct {
 // SetAddrInfo returns a copy of addr in which the Attributes field is updated
 // with addrInfo.
 func SetAddrInfo(addr resolver.Address, addrInfo AddrInfo) resolver.Address {
+	fmt.Println("SetAddrInfo==", addrInfo)
 	addr.Attributes = attributes.New()
 	addr.Attributes = addr.Attributes.WithValues(attributeKey{}, addrInfo)
 	return addr
@@ -45,7 +48,7 @@ func GetAddrInfo(addr resolver.Address) AddrInfo {
 
 // NewBuilder creates a new weight balancer builder.
 func newBuilder() balancer.Builder {
-	return base.NewBalancerBuilderV2(Name, &rrPickerBuilder{}, base.Config{HealthCheck: false})
+	return base.NewBalancerBuilderV2(Name, &rrPickerBuilder{}, base.Config{HealthCheck: true})
 }
 
 func init() {
@@ -55,7 +58,8 @@ func init() {
 type rrPickerBuilder struct{}
 
 func (*rrPickerBuilder) Build(info base.PickerBuildInfo) balancer.V2Picker {
-	grpclog.Infof("weightPicker: newPicker called with info: %v", info)
+	log.Printf("weightPicker: newPicker called with info: %+v", info)
+	log.Printf("=====%+v",info.ReadySCs)
 	if len(info.ReadySCs) == 0 {
 		return base.NewErrPickerV2(balancer.ErrNoSubConnAvailable)
 	}
