@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"strconv"
 	"sync/atomic"
@@ -51,7 +53,24 @@ var (
 
 // 用于记录聊天室用户，并进行消息广播
 func broadcaster() {
-
+	users := make(map[*User]struct{})
+	for {
+		select {
+		case user := <-enteringChannel:
+			//新用户进入
+			users[user] = struct{}{}
+		case user := <-leavingChannel:
+			delete(users, user)
+			close(user.MessageChannel)
+		case msg := <-messageChannel:
+			for user, _ := range users {
+				if user.ID == msg.OwnerID {
+					continue
+				}
+				user.MessageChannel <- msg.Content
+			}
+		}
+	}
 }
 
 func handleConn(conn net.Conn) {
@@ -81,8 +100,33 @@ func handleConn(conn net.Conn) {
 	//控制超时用户踢出
 	var userActive = make(chan struct{})
 	go func() {
-		
+		d := 1 * time.Minute
+		timer := time.NewTicker(d)
+		for {
+			select {
+			case <-timer.C:
+				conn.Close()
+			case <-userActive:
+				timer.Reset(d)
+			}
+		}
 	}()
+
+	// 循环读取用户输入
+	input := bufio.NewScanner(conn)
+	for input.Scan() {
+		msg.Content = strconv.Itoa(user.ID) + ":" + input.Text()
+		messageChannel <- msg
+		userActive <- struct{}{}
+	}
+	if err := input.Err(); err != nil {
+		log.Fatalln("读取数据错误", err)
+	}
+
+	//用户离开
+	leavingChannel <- user
+	msg.Content = "user:`" + strconv.Itoa(user.ID) + "` has left"
+	messageChannel <- msg
 }
 
 var id int64
