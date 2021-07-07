@@ -100,7 +100,7 @@ func handleConn(conn net.Conn) {
 	//控制超时用户踢出
 	var userActive = make(chan struct{})
 	go func() {
-		d := 1 * time.Minute
+		d := 1 * time.Hour
 		timer := time.NewTicker(d)
 		for {
 			select {
@@ -115,17 +115,17 @@ func handleConn(conn net.Conn) {
 	// 循环读取用户输入
 	input := bufio.NewScanner(conn)
 	for input.Scan() {
-		msg.Content = strconv.Itoa(user.ID) + ":" + input.Text()
+		msg.Content = strconv.Itoa(user.ID) + "::" + input.Text()
 		messageChannel <- msg
 		userActive <- struct{}{}
 	}
 	if err := input.Err(); err != nil {
 		log.Fatalln("读取数据错误", err)
 	}
-
 	//用户离开
 	leavingChannel <- user
 	msg.Content = "user:`" + strconv.Itoa(user.ID) + "` has left"
+	fmt.Println(msg.Content)
 	messageChannel <- msg
 }
 
@@ -137,6 +137,6 @@ func GenUserID() int {
 
 func sendMessage(conn net.Conn, ch <-chan string) {
 	for msg := range ch {
-		fmt.Println(conn, msg)
+		fmt.Fprintln(conn, msg)
 	}
 }
