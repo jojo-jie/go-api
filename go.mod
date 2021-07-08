@@ -6,6 +6,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/facebook/ent v0.5.1
+	github.com/fvbock/endless v0.0.0-20170109170031-447134032cb6 // indirect
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/pprof v1.2.1
 	github.com/gin-contrib/sessions v0.0.3
