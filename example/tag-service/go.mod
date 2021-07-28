@@ -49,3 +49,5 @@ require (
 )
 
 replace github.com/coreos/bbolt v1.3.6 => go.etcd.io/bbolt v1.3.6
+
+replace github.com/dgrijalva/jwt-go v3.2.0 => github.com/golang-jwt/jwt v3.2.1
