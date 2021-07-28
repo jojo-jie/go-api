@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"errors"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/gin-gonic/gin"
 	"go-api/cache"
 	"go-api/serializer"

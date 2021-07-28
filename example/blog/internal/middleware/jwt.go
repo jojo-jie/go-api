@@ -3,7 +3,7 @@ package middleware
 import (
 	"blog/pkg/app"
 	"blog/pkg/errcode"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/gin-gonic/gin"
 )
 
