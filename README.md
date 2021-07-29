@@ -84,5 +84,5 @@ air
 make
 ```
 ## JetBrains支持
-[<img src="https://s4.wandougongzhu.cn/s/c6/jetbrains_fab64f.png" style="zoom:15%;" />](http://jb.gg/OpenSource)
+[<img src="jetbrains.png" style="zoom:15%;" />](http://jb.gg/OpenSource)
 
