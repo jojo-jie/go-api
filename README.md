@@ -84,5 +84,5 @@ air
 make
 ```
 ## JetBrains支持
-[<img src="jetbrains.png" style="zoom:15%;" />](http://jb.gg/OpenSource)
+[<img src="https://github.com/jojo-jie/raw/go-api/master/jetbrains.png" style="zoom:15%;" />](http://jb.gg/OpenSource)
 
