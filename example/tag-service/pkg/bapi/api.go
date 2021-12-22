@@ -20,7 +20,7 @@ type AccessToken struct {
 	Token string `json:"token"`
 }
 
-func (a *API) getAccessToken(ctx context.Context) (string, error) {
+func (a API) getAccessToken(ctx context.Context) (string, error) {
 	url := fmt.Sprintf(
 		"%s?app_key=%s&app_secret=%s",
 		"auth",
