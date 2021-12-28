@@ -2,7 +2,7 @@ package etcd
 
 import (
 	"context"
-	"github.com/coreos/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"tag-service/pkg/registry"
 )
 

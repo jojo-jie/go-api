@@ -3,7 +3,7 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"github.com/coreos/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
 	"tag-service/pkg/registry"
 	"time"

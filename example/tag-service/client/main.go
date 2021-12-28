@@ -9,9 +9,6 @@ import (
 	"tag-service/pkg/balance"
 	"tag-service/pkg/weight"
 
-	/*"fmt"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/naming"*/
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
@@ -23,7 +20,6 @@ import (
 	"tag-service/pkg/errcode"
 	"tag-service/pkg/tracer"
 	pb "tag-service/proto"
-	//"time"
 )
 
 type Auth struct {

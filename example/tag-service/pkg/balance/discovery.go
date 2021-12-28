@@ -2,8 +2,8 @@ package balance
 
 import (
 	"context"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/resolver"
 	"log"
 	"strconv"
@@ -69,7 +69,7 @@ func NewServiceDiscovery(endpoints []string, lbName string) (resolver.Builder, e
 		return nil, err
 	}
 	return &ServiceDiscovery{
-		cli: client,
+		cli:    client,
 		lbName: lbName,
 	}, nil
 }
@@ -96,14 +96,14 @@ func (s *ServiceDiscovery) SetServiceList(key, val string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	//获取服务地址
-	addr:=resolver.Address{Addr: strings.TrimPrefix(key, s.prefix)}
+	addr := resolver.Address{Addr: strings.TrimPrefix(key, s.prefix)}
 	if s.lbName == weight.Name {
 		//获取服务地址权重
 		nodeWeight, err := strconv.Atoi(val)
 		if err != nil {
 			nodeWeight = 1
 		}
-		addr = weight.SetAddrInfo(addr,weight.AddrInfo{Weight: nodeWeight})
+		addr = weight.SetAddrInfo(addr, weight.AddrInfo{Weight: nodeWeight})
 	}
 	s.serviceList.Store(key, addr)
 	s.cc.UpdateState(resolver.State{Addresses: s.getServices()})

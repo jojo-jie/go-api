@@ -15,7 +15,7 @@
 5. [godotenv](https://github.com/joho/godotenv): 开发环境下的环境变量工具，方便使用环境变量
 6. [Gin-Cors](https://github.com/gin-contrib/cors): Gin框架提供的跨域中间件
 7. [Swagger](github.com/swaggo/gin-swagger): go swagger
-8. [jwt](https://github.com/dgrijalva/jwt-go): go jwt
+8. [jwt](https://github.com/golang-jwt/jwt): go jwt
 9. 自行实现了国际化i18n的一些基本功能
 10. 本项目可使用基于cookie实现的session来保存登录状态的，或使用jwt token验证
 11. 令牌桶限流

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/coreos/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/balancer/roundrobin"
 	"log"
 	"tag-service/pkg/weight"
@@ -23,8 +23,6 @@ type ServiceRegister struct {
 	lbInfo    map[string]interface{} // round_robin weight {"LoadBalancingPolicy": "%s", "weight": "1"}
 }
 
-
-
 // NewServiceRegister 新建注册服务
 func NewServiceRegister(endpoints []string, serName string, addr string, lease int64, lbInfo string) (*ServiceRegister, error) {
 	client, err := clientv3.New(clientv3.Config{
@@ -34,16 +32,16 @@ func NewServiceRegister(endpoints []string, serName string, addr string, lease i
 	if err != nil {
 		return nil, err
 	}
-	mm:=make(map[string]interface{},2)
+	mm := make(map[string]interface{}, 2)
 	err = json.Unmarshal([]byte(lbInfo), &mm)
 	if err != nil {
 		return nil, err
 	}
 	ser := &ServiceRegister{
-		cli:   client,
-		key:   "/" + schema + "/" + serName + "/" + addr,
-		value: addr,
-		ctx:   context.Background(),
+		cli:    client,
+		key:    "/" + schema + "/" + serName + "/" + addr,
+		value:  addr,
+		ctx:    context.Background(),
 		lbInfo: mm,
 	}
 
