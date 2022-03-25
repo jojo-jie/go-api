@@ -38,34 +38,32 @@ func ccc() (func(), error) {
 
 func TestQuickSort(t *testing.T) {
 	rand.Seed(time.Now().Unix())
-	sequence := rand.Perm(34)
+	sequence := rand.Perm(55)
 	t.Logf("sequence before sort: %v", sequence)
-	quickSort(sequence, 0, len(sequence)-1)
+	quickSort[int](sequence, 0, len(sequence)-1)
 	t.Logf("sequence after sort: %v", sequence)
 }
 
-func quickSort(sequence []int, low int, high int) {
+func quickSort[T any](sequence []int, low, high int) {
 	if high <= low {
 		return
 	}
-	j := partition(sequence, low, high)
-	quickSort(sequence, low, j-1)
-	quickSort(sequence, j+1, high)
+	i := partition(sequence, low, high)
+	quickSort(sequence, low, i-1)
+	quickSort(sequence, i+1, high)
 }
 
-// first quicksort
 func partition(sequence []int, low, high int) int {
-	i, j := low+1, high
+	i, j := low, high-1
 	for {
-		// first element is pivot
-		for sequence[i] < sequence[low] {
+		for sequence[i] < sequence[high] {
 			i++
 			if i >= high {
 				break
 			}
 		}
 
-		for sequence[j] > sequence[low] {
+		for sequence[j] > sequence[high] {
 			j--
 			if j <= low {
 				break
@@ -77,6 +75,6 @@ func partition(sequence []int, low, high int) int {
 		}
 		sequence[i], sequence[j] = sequence[j], sequence[i]
 	}
-	sequence[low], sequence[j] = sequence[j], sequence[low]
-	return j
+	sequence[high], sequence[i] = sequence[i], sequence[high]
+	return i
 }
