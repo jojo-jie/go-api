@@ -38,13 +38,13 @@ func ccc() (func(), error) {
 
 func TestQuickSort(t *testing.T) {
 	rand.Seed(time.Now().Unix())
-	sequence := rand.Perm(55)
+	sequence := rand.Perm(33)
 	t.Logf("sequence before sort: %v", sequence)
-	quickSort[int](sequence, 0, len(sequence)-1)
+	quickSort(sequence, 0, len(sequence)-1)
 	t.Logf("sequence after sort: %v", sequence)
 }
 
-func quickSort[T any](sequence []int, low, high int) {
+func quickSort(sequence []int, low, high int) {
 	if high <= low {
 		return
 	}
