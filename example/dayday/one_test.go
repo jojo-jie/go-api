@@ -1,7 +1,9 @@
 package dayday
 
 import (
+	"fmt"
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 )
@@ -36,24 +38,28 @@ func ccc() (func(), error) {
 	}, nil
 }
 
+type Q interface {
+	~int | ~int8 | ~int32 | ~int64 | ~float64 | ~float32
+}
+
 func TestQuickSort(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	sequence := rand.Perm(33)
 	t.Logf("sequence before sort: %v", sequence)
-	quickSort(sequence, 0, len(sequence)-1)
+	quickSort[int](sequence, 0, len(sequence)-1)
 	t.Logf("sequence after sort: %v", sequence)
 }
 
-func quickSort(sequence []int, low, high int) {
+func quickSort[T Q](sequence []T, low, high int) {
 	if high <= low {
 		return
 	}
-	i := partition(sequence, low, high)
-	quickSort(sequence, low, i-1)
-	quickSort(sequence, i+1, high)
+	i := partition[T](sequence, low, high)
+	quickSort[T](sequence, low, i-1)
+	quickSort[T](sequence, i+1, high)
 }
 
-func partition(sequence []int, low, high int) int {
+func partition[T Q](sequence []T, low, high int) int {
 	i, j := low, high-1
 	for {
 		for sequence[i] < sequence[high] {
@@ -77,4 +83,50 @@ func partition(sequence []int, low, high int) int {
 	}
 	sequence[high], sequence[i] = sequence[i], sequence[high]
 	return i
+}
+
+type sumT interface {
+	~int | ~float64 | ~float32
+}
+
+func TestGeneric(t *testing.T) {
+	rand.Seed(time.Now().Unix())
+	list := rand.Perm(10)
+	t.Logf("list %v", list)
+	t.Logf("sum %v", sumSlice[int](list))
+}
+
+func sumSlice[T sumT](s []T) T {
+	var ss T
+	for _, v := range s {
+		ss = ss + v
+	}
+	return ss
+}
+
+type Person struct {
+	Name string
+	Age  int
+}
+
+func (p Person) String() string {
+	return fmt.Sprintf("%s: %d", p.Name, p.Age)
+}
+
+type ByAge []Person
+
+func (a ByAge) Len() int           { return len(a) }
+func (a ByAge) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByAge) Less(i, j int) bool { return a[i].Age > a[j].Age }
+
+func TestSort(t *testing.T) {
+	p := []Person{
+		{"kirito", 17},
+		{"asuna", 19},
+		{"baobao", 22},
+		{"linjie", 19},
+	}
+	t.Logf("sort before %+v", p)
+	sort.Sort(ByAge(p))
+	t.Logf("sort after %+v", p)
 }
