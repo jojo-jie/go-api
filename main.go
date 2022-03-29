@@ -5,6 +5,7 @@ import (
 	"go-api/conf"
 	_ "go-api/docs"
 	"go-api/server"
+	"runtime"
 )
 
 // @title Gin swagger
@@ -17,6 +18,9 @@ import (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @host localhost
 func main() {
+	//Ballast，一种精准控制 Go GC 提高性能的方法
+	//https://mp.weixin.qq.com/s/OVUsHNXGz_FicwkYgdCUdQ
+	ballast := make([]byte, 10*1024*1025*1024)
 	// 从配置文件读取配置
 	conf.Init()
 
@@ -24,4 +28,5 @@ func main() {
 	r := server.NewRouter()
 	pprof.Register(r)
 	r.Run(":3000")
+	runtime.KeepAlive(ballast)
 }
