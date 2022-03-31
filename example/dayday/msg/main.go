@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"embed"
+	"fmt"
 	"github.com/spf13/viper"
 	"gopkg.in/gomail.v2"
 	"html/template"
@@ -56,6 +57,8 @@ var WeekDayMap = map[string]string{
 	"Sunday":    "星期日",
 }
 
+var nowTime time.Time
+
 func init() {
 	f, err := configDirs.ReadFile("config.yaml")
 	if os.IsNotExist(err) {
@@ -81,7 +84,7 @@ func init() {
 		panic(err)
 	}
 	location, _ := time.LoadLocation("Asia/Shanghai")
-	nowTime := time.Now().In(location)
+	nowTime = time.Now().In(location)
 	message.DateTime = nowTime.Format("2006-01-02")
 	t, err := time.Parse("2006-01-02", message.DateTime)
 	if err != nil {
@@ -93,6 +96,7 @@ func init() {
 }
 
 func main() {
+	fmt.Println("执行开始时间 " + nowTime.Format("2006-01-02 15:04:05"))
 	m := gomail.NewMessage()
 	m.SetHeader("From", m.FormatAddress(emailConfig.From, emailConfig.FromName))
 	m.SetHeader("To", emailConfig.To...)
@@ -107,4 +111,5 @@ func main() {
 	if err := d.DialAndSend(m); err != nil {
 		panic(err)
 	}
+	fmt.Println("执行结束时间 " + nowTime.Format("2006-01-02 15:04:05"))
 }
