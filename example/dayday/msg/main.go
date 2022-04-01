@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"embed"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"gopkg.in/gomail.v2"
 	"html/template"
@@ -107,6 +108,14 @@ func main() {
 	})
 	d := gomail.NewDialer("smtp.163.com", 465, emailConfig.From, emailConfig.Password)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	defer func() {
+		if r := recover(); r != nil {
+			<-time.After(20 * time.Second)
+			if err := d.DialAndSend(m); err != nil {
+				fmt.Println("再次执行发送失败 ", errors.Wrap(fmt.Errorf("%v", r), "邮件发送错误").Error())
+			}
+		}
+	}()
 	// Send the email to Bob, Cora and Dan.
 	if err := d.DialAndSend(m); err != nil {
 		panic(err)
