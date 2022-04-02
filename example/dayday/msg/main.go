@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"embed"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/gomail.v2"
 	"html/template"
 	"io"
@@ -98,6 +100,21 @@ func init() {
 
 func main() {
 	fmt.Println("执行开始时间 " + nowTime.Format("2006-01-02 15:04:05"))
+	g, _ := errgroup.WithContext(context.Background())
+	g.Go(func() error {
+		return sendEmail()
+	})
+	if err := g.Wait(); err != nil {
+		<-time.After(20 * time.Second)
+		err := sendEmail()
+		if err != nil {
+			fmt.Println("再次执行发送失败 ", errors.Wrap(fmt.Errorf("%v", err), "邮件发送错误").Error())
+		}
+	}
+	fmt.Println("执行结束时间 " + nowTime.Format("2006-01-02 15:04:05"))
+}
+
+func sendEmail() error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", m.FormatAddress(emailConfig.From, emailConfig.FromName))
 	m.SetHeader("To", emailConfig.To...)
@@ -108,17 +125,5 @@ func main() {
 	})
 	d := gomail.NewDialer("smtp.163.com", 465, emailConfig.From, emailConfig.Password)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-	defer func() {
-		if r := recover(); r != nil {
-			<-time.After(20 * time.Second)
-			if err := d.DialAndSend(m); err != nil {
-				fmt.Println("再次执行发送失败 ", errors.Wrap(fmt.Errorf("%v", r), "邮件发送错误").Error())
-			}
-		}
-	}()
-	// Send the email to Bob, Cora and Dan.
-	if err := d.DialAndSend(m); err != nil {
-		panic(err)
-	}
-	fmt.Println("执行结束时间 " + nowTime.Format("2006-01-02 15:04:05"))
+	return d.DialAndSend(m)
 }
