@@ -2,6 +2,7 @@ package dayday
 
 import (
 	"dayday/constraints"
+	"github.com/stretchr/testify/assert"
 	"math"
 	"sort"
 	"strconv"
@@ -167,4 +168,114 @@ func max[T constraints.Ordered](s []T, t string) T {
 		}
 	}
 	return m
+}
+
+// https://www.dolthub.com/blog/2022-04-01-fast-generics/
+type Array interface {
+	Get(i int) uint64
+	Len() int
+}
+
+type ArrayVal struct {
+	elems []uint64
+}
+
+var _ Array = ArrayVal{}
+
+func (v ArrayVal) Get(i int) uint64 {
+	//TODO implement me
+	return v.elems[i]
+}
+
+func (v ArrayVal) Len() int {
+	//TODO implement me
+	return len(v.elems)
+}
+
+type ArrayRef struct {
+	elems []uint64
+}
+
+var _ Array = &ArrayRef{}
+
+func (p *ArrayRef) Get(i int) uint64 {
+	return p.elems[i]
+}
+
+func (p *ArrayRef) Len() int {
+	return len(p.elems)
+}
+
+func InterfaceSearch(target uint64, arr Array) int {
+	i, j := 0, arr.Len()
+	for i < j {
+		h := int(uint(i+j) >> 1)
+		if arr.Get(h) < target {
+			i = h + 1
+		} else {
+			j = h
+		}
+	}
+	return i
+}
+
+func GenericSearch[T Array](target uint64, arr T) int {
+	i, j := 0, arr.Len()
+	for i < j {
+		h := int(uint(i+j) >> 1)
+		if arr.Get(h) < target {
+			i = h + 1
+		} else {
+			j = h
+		}
+	}
+	return i
+}
+
+var elems []uint64
+
+func init() {
+	elems = make([]uint64, 500_000)
+	for i := range elems {
+		elems[i] = uint64(i)
+	}
+}
+func BenchmarkReferenceSearch(b *testing.B) {
+	b.ResetTimer()
+	b.Run("interface search", func(b *testing.B) {
+		for idx := 0; idx < 1_000_000; idx++ {
+			arr := &ArrayRef{elems: elems}
+			target := uint64(idx % arr.Len())
+			guess := InterfaceSearch(target, arr)
+			assert.True(b, uint64(guess) == target)
+		}
+	})
+	b.Run("generic search", func(b *testing.B) {
+		for idx := 0; idx < 1_000_000; idx++ {
+			arr := &ArrayRef{elems: elems}
+			target := uint64(idx % arr.Len())
+			guess := GenericSearch(target, arr)
+			assert.True(b, uint64(guess) == target)
+		}
+	})
+}
+
+func BenchmarkValueSearch(b *testing.B) {
+	b.ResetTimer()
+	b.Run("interface search", func(b *testing.B) {
+		for idx := 0; idx < 1_000_000; idx++ {
+			arr := ArrayVal{elems: elems}
+			target := uint64(idx % arr.Len())
+			guess := InterfaceSearch(target, arr)
+			assert.True(b, uint64(guess) == target)
+		}
+	})
+	b.Run("generic search", func(b *testing.B) {
+		for idx := 0; idx < 1_000_000; idx++ {
+			arr := ArrayVal{elems: elems}
+			target := uint64(idx % arr.Len())
+			guess := GenericSearch(target, arr)
+			assert.True(b, uint64(guess) == target)
+		}
+	})
 }
