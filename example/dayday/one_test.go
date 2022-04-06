@@ -130,3 +130,47 @@ func TestSort(t *testing.T) {
 	sort.Sort(ByAge(p))
 	t.Logf("sort after %+v", p)
 }
+
+func TestSortMerge(t *testing.T) {
+	rand.Seed(time.Now().Unix())
+	sequence := rand.Perm(33)
+	t.Logf("sequence before sort: %v", sequence)
+	MergeSort[int](sequence, 0, len(sequence))
+	t.Logf("sequence after sort: %v", sequence)
+}
+
+func MergeSort[T Q](array []T, begin int, end int) {
+	if end-begin > 1 {
+		mid := begin + (end-begin+1)/2
+		MergeSort[T](array, begin, mid)
+		MergeSort[T](array, mid, end)
+		merge(array, begin, mid, end)
+	}
+}
+
+func merge[T Q](array []T, begin, mid, end int) {
+	leftSize := mid - begin
+	rightSize := end - mid
+	newSize := leftSize + rightSize
+	result := make([]T, 0, newSize)
+	l, r := 0, 0
+	for l < leftSize && r < rightSize {
+		lValue := array[begin+l]
+		rValue := array[mid+r]
+		if lValue < rValue {
+			result = append(result, lValue)
+			l++
+		} else {
+			result = append(result, rValue)
+			r++
+		}
+	}
+
+	result = append(result, array[begin+l:mid]...)
+	result = append(result, array[mid+r:end]...)
+
+	for i := 0; i < newSize; i++ {
+		array[begin+i] = result[i]
+	}
+	return
+}
