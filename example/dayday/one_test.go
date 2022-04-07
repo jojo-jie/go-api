@@ -42,6 +42,7 @@ type Q interface {
 	~int | ~int8 | ~int32 | ~int64 | ~float64 | ~float32
 }
 
+//nlogn
 func TestQuickSort(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	sequence := rand.Perm(33)
@@ -131,6 +132,7 @@ func TestSort(t *testing.T) {
 	t.Logf("sort after %+v", p)
 }
 
+//nlogn
 func TestSortMerge(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	sequence := rand.Perm(33)

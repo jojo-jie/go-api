@@ -5,6 +5,7 @@ import (
 	"go-api/conf"
 	_ "go-api/docs"
 	"go-api/server"
+	_ "go.uber.org/automaxprocs"
 	"runtime"
 )
 
