@@ -21,7 +21,8 @@ import (
 func main() {
 	//Ballast，一种精准控制 Go GC 提高性能的方法
 	//https://mp.weixin.qq.com/s/OVUsHNXGz_FicwkYgdCUdQ
-	ballast := make([]byte, 10*1024*1025*1024)
+	//https://medium.com/a-journey-with-go/go-keeping-a-variable-alive-c28e3633673a
+	ballast := make([]byte, 10<<30)
 	// 从配置文件读取配置
 	conf.Init()
 
