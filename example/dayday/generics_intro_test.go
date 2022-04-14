@@ -1,8 +1,10 @@
 package dayday
 
 import (
-	"dayday/constraints"
+	"dayday/blog_demo"
+	"dayday/cache"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/constraints"
 	"math"
 	"sort"
 	"strconv"
@@ -34,15 +36,8 @@ func reduce[T, M any](s []T, f func(M, T) M, initValue M) M {
 	return acc
 }
 
-func cmp[T Ordered](p0, p1 T) bool {
+func cmp[T constraints.Ordered](p0, p1 T) bool {
 	return p0 < p1
-}
-
-type Ordered interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64 |
-		~string
 }
 
 func TestSliceMap(t *testing.T) {
@@ -278,4 +273,15 @@ func BenchmarkValueSearch(b *testing.B) {
 			assert.True(b, uint64(guess) == target)
 		}
 	})
+}
+
+func TestStructGenerics(t *testing.T) {
+	category := blog_demo.Category{
+		ID:   1,
+		Name: "Go Generics",
+		Slug: "go-generics",
+	}
+	c := cache.New[blog_demo.Category]()
+	c.Set(category.Slug, category)
+	t.Log(c.Get(category.Slug))
 }
