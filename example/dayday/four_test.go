@@ -1,10 +1,15 @@
 package dayday
 
 import (
-	"go.uber.org/goleak"
+	"database/sql"
 	"runtime"
+	"sync"
 	"syscall"
 	"testing"
+
+	_ "github.com/go-sql-driver/mysql"
+
+	"go.uber.org/goleak"
 )
 
 type File struct{ d int }
@@ -55,4 +60,36 @@ func TestGC(t *testing.T) {
 	content := readFile(p.d)
 	//runtime.KeepAlive(p)
 	println("Here is the content: " + content)
+}
+
+func TestSql(t *testing.T) {
+	db, err := sql.Open("mysql", "root:xxxx@tcp(:)/my_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	db.SetMaxOpenConns(200)
+	db.SetMaxIdleConns(20)
+	defer db.Close()
+	wg := sync.WaitGroup{}
+	wg.Add(30)
+	for i := 0; i < 30; i++ {
+		go updateData(db, t, &wg)
+	}
+	wg.Wait()
+}
+
+func updateData(db *sql.DB, t *testing.T, wg *sync.WaitGroup) {
+	defer wg.Done()
+	sqlStr := "update api_service set status=? where api_id = ? and status = 0"
+	ret, err := db.Exec(sqlStr, 1, 8)
+	if err != nil {
+		t.Logf("update failed, err:%v\n", err)
+		return
+	}
+	n, err := ret.RowsAffected() // 操作影响的行数
+	if err != nil {
+		t.Logf("get RowsAffected failed, err:%v\n", err)
+		return
+	}
+	t.Logf("update success, affected rows:%d\n", n)
 }
