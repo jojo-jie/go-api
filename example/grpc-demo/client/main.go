@@ -3,23 +3,26 @@ package main
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 	pb "grpc-demo/proto/helloword"
 	"io"
 	"log"
 	"time"
+
+	"google.golang.org/grpc"
 )
 
 func main() {
-	conn, _ := grpc.Dial(":8000", grpc.WithInsecure())
+	conn, _ := grpc.Dial(":8033", grpc.WithInsecure())
 	defer conn.Close()
 	client := pb.NewGreeterClient(conn)
-	/*err := SayHello(client)
+	err := SayHello(client)
 	if err != nil {
 		log.Fatalf("SayHello err:%v", err)
 	}
 
-	err = SayList(client, &pb.HelloRequest{
+	/*err = SayList(client, &pb.HelloRequest{
 		Name: "eddycjy",
 	})
 	if err != nil {
@@ -31,22 +34,33 @@ func main() {
 	if err != nil {
 		log.Fatalf("SayRecord err:%v", err)
 	}*/
-	err:=SayRoute(client, &pb.HelloRequest{
+	/*err := SayRoute(client, &pb.HelloRequest{
 		Name: "jojo",
 	})
 	if err != nil {
 		log.Fatalf("SayRecord err:%v", err)
-	}
+	}*/
+}
+
+type example struct {
+	name string
+	age  int
 }
 
 func SayHello(client pb.GreeterClient) error {
+	s := make(map[string]any)
+	s["name"] = "kirito"
+	s["age"] = 1212
+	ss, _ := structpb.NewStruct(s)
 	resp, err := client.SayHello(context.Background(), &pb.HelloRequest{
 		Name: "eddycjy",
+		Req:  ss,
 	})
 	if err != nil {
 		return err
 	}
-	log.Printf("client.SayHello resp: %s", resp.Message)
+
+	log.Printf("client.SayHello resp: %s", protojson.Format(resp))
 	return nil
 }
 

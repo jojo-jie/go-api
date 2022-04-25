@@ -4,18 +4,21 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"google.golang.org/grpc"
 	pb "grpc-demo/proto/helloword"
 	"io"
 	"log"
 	"net"
 	"time"
+
+	"google.golang.org/protobuf/types/known/anypb"
+
+	"google.golang.org/grpc"
 )
 
 var port string
 
 func init() {
-	flag.StringVar(&port, "p", ":8000", "启动端口号")
+	flag.StringVar(&port, "p", ":8033", "启动端口号")
 	flag.Parse()
 }
 
@@ -24,8 +27,14 @@ type GreeterServer struct {
 }
 
 func (s *GreeterServer) SayHello(ctx context.Context, r *pb.HelloRequest) (*pb.HelloReply, error) {
+	fmt.Println(r.Req)
+	a, err := anypb.New(&pb.AnyMessageInfo{Age: "12 years"})
+	if err != nil {
+		return nil, err
+	}
 	return &pb.HelloReply{
 		Message: "hello world",
+		Res:     a,
 	}, nil
 }
 
@@ -85,5 +94,8 @@ func main() {
 	server := grpc.NewServer()
 	pb.RegisterGreeterServer(server, &GreeterServer{})
 	lis, _ := net.Listen("tcp", port)
-	server.Serve(lis)
+	err := server.Serve(lis)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
