@@ -21,6 +21,11 @@ message HelloRequest {
   google.protobuf.Struct req = 2;
 }
 
+message HelloRS {
+  string name = 1;
+  string age = 2;
+}
+
 message HelloReply {
   string message = 1;
   google.protobuf.Any res = 2;
