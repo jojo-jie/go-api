@@ -153,7 +153,7 @@ func TestRate(t *testing.T) {
 	defer log.Printf("Done.")
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ltime | log.LUTC)
-	apiConnection := Open()
+	apiConnection := NewAPIConnectionV2()
 	var wg sync.WaitGroup
 	wg.Add(20)
 	for i := 0; i < 10; i++ {
@@ -173,12 +173,12 @@ func TestRate(t *testing.T) {
 			defer wg.Done()
 			err := apiConnection.ResolveAddress(context.Background())
 			if err != nil {
-				t.Logf("cannot ResolveAddress: %v\n", err)
+				log.Printf("cannot ResolveAddress: %v", err)
 			}
 		}()
 	}
 
-	t.Logf("ResolveAddress")
+	log.Printf("ResolveAddress")
 	wg.Wait()
 }
 
