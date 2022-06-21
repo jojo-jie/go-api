@@ -5,9 +5,11 @@ go 1.18
 require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/marusama/cyclicbarrier v1.1.0
 	github.com/stretchr/testify v1.7.1
 	go.uber.org/goleak v1.1.12
 	golang.org/x/exp v0.0.0-20220407100705-7b9b53b0aca4
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858
 )
 
