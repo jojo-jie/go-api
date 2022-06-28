@@ -32,7 +32,7 @@ func printToPDF(urlstr string, res *[]byte) chromedp.Tasks {
 	return chromedp.Tasks{
 		chromedp.Navigate(urlstr),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			buf, _, err := page.PrintToPDF().WithPrintBackground(false).Do(ctx)
+			buf, _, err := page.PrintToPDF().WithMarginLeft(0).WithPrintBackground(false).Do(ctx)
 			if err != nil {
 				return err
 			}
@@ -50,7 +50,7 @@ func TestBarPDF(t *testing.T) {
 	elementScreenshot := func(urlstr, sel string, res *[]byte) chromedp.Tasks {
 		return chromedp.Tasks{
 			chromedp.Navigate(urlstr),
-			chromedp.Screenshot(sel, res, chromedp.NodeVisible),
+			chromedp.Screenshot(sel, res, chromedp.ByQuery),
 		}
 	}
 
@@ -61,7 +61,7 @@ func TestBarPDF(t *testing.T) {
 		t.Fatal(err)
 	}
 	buf, _ = os.ReadFile(barFile)
-	if err := chromedp.Run(ctx, elementScreenshot(`file://`+barFile, `canvas`, &buf)); err != nil {
+	if err := chromedp.Run(ctx, elementScreenshot(`file://`+barFile, `html`, &buf)); err != nil {
 		t.Fatal(err)
 	}
 
