@@ -12,12 +12,15 @@ import (
 	goQrcode "github.com/skip2/go-qrcode"
 	"image"
 	"os"
+	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
 
 func TestQrcodeLogin(t *testing.T) {
+	t.Log("num before ===", runtime.NumGoroutine())
 	ctx, _ := chromedp.NewExecAllocator(
 		context.Background(),
 		append(
@@ -25,24 +28,49 @@ func TestQrcodeLogin(t *testing.T) {
 			chromedp.Flag("headless", false),
 		)...,
 	)
-	ctx, _ = context.WithTimeout(ctx, 300*time.Second)
-	ctx, _ = chromedp.NewContext(ctx, chromedp.WithDebugf(t.Logf))
-	//defer cancel()
-	if err := chromedp.Run(ctx, myTasks()); err != nil {
-		err := chromedp.Run(ctx, myReadyLogin())
-		if err != nil {
-			t.Fatal(err)
-		}
-	} else {
-		t.Log("success !!!!")
-	}
+	ctx, cancel := context.WithTimeout(ctx, 300*time.Second)
+	ctx, cancel02 := chromedp.NewContext(ctx, chromedp.WithDebugf(t.Logf))
+	defer func() {
+		cancel()
+		cancel02()
+		chromedp.Cancel(ctx)
+		t.Log("num after ===", runtime.NumGoroutine())
+	}()
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	ch := make(chan error, 1)
+	go func() {
+		defer wg.Done()
+		ch <- chromedp.Run(ctx, myTasks())
+	}()
 
+	go func() {
+		defer wg.Done()
+		select {
+		case err := <-ch:
+			if err != nil {
+				ch <- chromedp.Run(ctx, myReadyLogin())
+			} else {
+				ch <- nil
+			}
+		case <-time.After(5 * time.Second):
+			t.Log("time out")
+			ch <- errors.New("time out")
+		}
+	}()
+	wg.Wait()
+	t.Log("num===", runtime.NumGoroutine())
+	if err := <-ch; err != nil {
+		t.Fatal(err)
+	}
+	t.Log("login success")
 }
 
 const loginURL = "https://account.wps.cn/"
 
 const userCenterURl = "https://account.wps.cn/usercenter/apps"
 
+// check login
 func myTasks() chromedp.Tasks {
 	return chromedp.Tasks{
 		loadCookies(),
@@ -51,6 +79,7 @@ func myTasks() chromedp.Tasks {
 	}
 }
 
+// login
 func myReadyLogin() chromedp.Tasks {
 	return chromedp.Tasks{
 		// open login view
