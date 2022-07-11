@@ -18,6 +18,11 @@ func TestDay(t *testing.T) {
 	second := time.Date(2022, time.July, 29, 0, 0, 50, 0, location)
 	t.Log("first and second are same: ", IsSameDay(first, second))
 	t.Log("Days between start and end: ", DiffInDay(first, second))
+
+	start := time.Now()
+	end := time.Now().AddDate(0, 0, 26)
+	days := FindNoOfDays(1, start, end)
+	t.Log("No. of mondays between:", start, " and end:", end, "are: ", days)
 }
 
 func AddDay(t time.Time, days int) time.Time {
@@ -43,9 +48,27 @@ func IsSameDay(first, second time.Time) bool {
 
 // Find a number of days between given timestamps
 func DiffInDay(start, end time.Time) int {
-	//end.Sub(start).Minutes()
+	// To find the minutes difference
+	// end.Sub(start).Minutes()
 	return int(end.Sub(start).Hours() / 24)
 }
 
-// Days between start and end:
+// Find a number of weekdays(Mon, Tue,…) between two dates
+
+func FindNoOfDays(day int, start, end time.Time) int {
+	totalDays := 0
+	for start.Before(end) {
+		if int(start.Weekday()) == day {
+			totalDays++
+		}
+		start = AddDay(start, 1)
+	}
+	return totalDays
+}
+
+// Check if a given year is a leap year
+func IsLeapYear(year int) bool {
+	return year%4 == 0 && year%100 != 0 || year%400 == 0
+}
+
 
