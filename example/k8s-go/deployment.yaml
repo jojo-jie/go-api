@@ -12,7 +12,7 @@ spec:
       labels:
         app: go-app
     spec:
-      containers:
+      containers:#
         - name: go-app-container
           image: kiritoimagehub/kube-go-app
           resources:
