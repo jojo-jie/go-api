@@ -11,16 +11,24 @@ const (
 	dataCenterIDBits = uint64(5) // 5bit workerID out of 10bit worker dataCenterID
 	sequenceBits     = uint64(12)
 
-	maxWorkerID     = int64(-1) ^ (int64(-1) << workerIDBits)
+	maxWorkerID     = int64(-1) ^ (int64(-1) << workerIDBits) // The maximum value of the node ID used to prevent overflow
 	maxDataCenterID = int64(-1) ^ (int64(-1) << dataCenterIDBits)
 	maxSequence     = int64(-1) ^ (int64(-1) << sequenceBits)
 
-	timeLeft = uint8(22) // timeLeft = workerIDBits + sequenceBits // Timestamp offset left
+	timeLeft = uint8(22) // timeLeft = workerIDBits + dataCenterIDBits+ sequenceBits // Timestamp offset left
 	dataLeft = uint8(17) // dataLeft = dataCenterIDBits + sequenceBits
-	workLeft = uint8(22) //workLeft = sequenceBits // Node IDx offset to the left
+	workLeft = uint8(12) // workLeft = sequenceBits // Node IDx offset to the left
 
-	twepoch = int64(1659674040000)
+	twepoch = int64(1659674040000) // constant timestamp (milliseconds)
+
+	//twepoch = int64(1659674040000)
 )
+
+/*var twepoch int64
+
+func init()  {
+	twepoch = time.Now().UnixMilli()
+}*/
 
 type Worker struct {
 	mu           sync.Mutex
@@ -54,8 +62,11 @@ func (w *Worker) nextID() (uint64, error) {
 	if timeStamp < w.LastStamp {
 		return 0, errors.New("time is moving backwards,waiting until")
 	}
+
 	if w.LastStamp == timeStamp {
+
 		w.Sequence = (w.Sequence + 1) & maxSequence
+
 		if w.Sequence == 0 {
 			for timeStamp <= w.LastStamp {
 				timeStamp = w.getMilliSeconds()
@@ -70,5 +81,6 @@ func (w *Worker) nextID() (uint64, error) {
 		(w.DataCenterID << dataLeft) |
 		(w.WorkerID << workLeft) |
 		w.Sequence
+
 	return uint64(id), nil
 }
