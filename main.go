@@ -14,7 +14,7 @@ import (
 // @description 接口文档
 // @contact.name kirito
 // @contact.url http://localhost/swagger/index.html
-// @contact.email 18624275868@163.com
+// @contact.email 2724445401@qq.com
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @host localhost

@@ -34,7 +34,7 @@ type User struct {
 
 func (u *User) String() string {
 	return u.Addr + ", UID:" + strconv.Itoa(u.ID) + ", Enter At:" +
-		u.EnterAt.Format("2006-01-02 15:04:05+8000")
+		u.EnterAt.Format(time.DateTime)
 }
 
 type Message struct {
@@ -77,7 +77,7 @@ func handleConn(conn net.Conn) {
 	defer conn.Close()
 	//2006-01-02 15:04:05
 	location, _ := time.LoadLocation("Asia/Shanghai")
-	time.Now().In(location).Format("2006-01-02 15:04:05")
+	time.Now().In(location).Format(time.DateTime)
 	// 新用户进入，创建该用户实例
 	user := &User{
 		ID:             GenUserID(),

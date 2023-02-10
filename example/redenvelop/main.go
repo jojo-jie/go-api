@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
+	"github.com/hibiken/asynq"
 	"io"
 	"math"
 	"net/http"
@@ -14,12 +16,26 @@ import (
 	"time"
 )
 
+const localRedisAddr = "127.0.0.1:6379"
+
 var rdb *redis.Client
+
+var c *asynq.Client
 
 func init() {
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "127.0.0.1:6379",
+		Addr: localRedisAddr,
 	})
+
+	cif := asynq.RedisClientOpt{Addr: localRedisAddr, DB: 13}
+	srv := asynq.NewServer(
+		cif, asynq.Config{LogLevel: asynq.FatalLevel},
+	)
+	c = asynq.NewClient(cif)
+	err := srv.Start(asynq.HandlerFunc(Job))
+	if err != nil {
+		panic(err)
+	}
 }
 
 const redList = 8
@@ -38,7 +54,13 @@ func main() {
 		WriteTimeout:   5 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+
 	s.ListenAndServe()
+}
+
+func Job(ctx context.Context, task *asynq.Task) error {
+	fmt.Println(task.Type())
+	return nil
 }
 
 func createRedList(writer http.ResponseWriter, request *http.Request) {
@@ -120,5 +142,7 @@ func robRed(writer http.ResponseWriter, request *http.Request) {
 	userId := request.URL.Query().Get("user_id")
 	lua.Load(request.Context(), rdb)
 	result, _ := lua.EvalSha(request.Context(), rdb, []string{userHashKey, redKey, userAmountKey, userId}).Result()
-	writer.Write([]byte(result.(string)))
+	res := []byte(result.(string))
+	c.Enqueue(asynq.NewTask("save_rob_red_result", res, asynq.MaxRetry(3), asynq.Timeout(3*time.Second), asynq.ProcessIn(10*time.Second)))
+	writer.Write(res)
 }

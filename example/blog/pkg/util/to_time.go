@@ -5,9 +5,9 @@ import "time"
 var location *time.Location
 var layout string
 
-func init()  {
-	location,_ = time.LoadLocation("Asia/Shanghai")
-	layout = "2006-01-02 15:04:05"
+func init() {
+	location, _ = time.LoadLocation("Asia/Shanghai")
+	layout = time.DateTime
 }
 
 func GetFormatTime(t time.Time) string {

@@ -21,7 +21,7 @@ var doc = `{
         "contact": {
             "name": "kirito",
             "url": "http://localhost/swagger/index.html",
-            "email": "18624275868@163.com"
+            "email": "2724445401@qq.com"
         },
         "license": {
             "name": "Apache 2.0",
