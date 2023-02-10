@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/eddycjy/opentracing-gorm v0.0.0-20200209122056-516a807d2182
-	github.com/gin-gonic/gin v1.7.1
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator/v10 v10.5.0
