@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/go-chi/chi/v5"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"log"
