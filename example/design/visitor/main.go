@@ -104,12 +104,38 @@ func NewProductVisitor() IOrderVisitor {
 	}
 }
 
+// ProductVisitor 品类销售报表, 按产品汇总销售情况, 实现ISaleOrderVisitor接口
+type CustomerVisitor struct {
+	customers map[string]int
+}
+
+func (cv *CustomerVisitor) Visit(it *Order) {
+	n, ok := cv.customers[it.Customer]
+	if ok {
+		cv.customers[it.Customer] = n + it.Quantity
+	} else {
+		cv.customers[it.Customer] = it.Quantity
+	}
+}
+
+func (cv *CustomerVisitor) Report() {
+	for k, v := range cv.customers {
+		fmt.Printf("customer=%s, sum=%v\n", k, v)
+	}
+}
+
+func NewCustomerVisitor() IOrderVisitor {
+	return &CustomerVisitor{
+		customers: make(map[string]int, 0),
+	}
+}
+
 func main() {
 	orderService := NewOrderService()
 	orderService.Save(NewOrder(1, "张三", "广州", "电视", 10))
 	orderService.Save(NewOrder(2, "李四", "深圳", "冰箱", 20))
 	orderService.Save(NewOrder(3, "王五", "东莞", "空调", 30))
-	orderService.Save(NewOrder(4, "张三三", "广州", "空调", 10))
+	orderService.Save(NewOrder(4, "张三", "广州", "空调", 10))
 	orderService.Save(NewOrder(5, "李四四", "深圳", "电视", 20))
 	orderService.Save(NewOrder(6, "王五五", "东莞", "冰箱", 30))
 
@@ -120,4 +146,8 @@ func main() {
 	pv := NewProductVisitor()
 	orderService.Accept(pv)
 	pv.Report()
+
+	cv2 := NewCustomerVisitor()
+	orderService.Accept(cv2)
+	cv2.Report()
 }
