@@ -27,8 +27,8 @@ type UserToken struct {
 }
 
 type UserList struct {
-	list  []UserToken
-	total int `json:"total"`
+	List  []UserToken
+	Total int `json:"total"`
 }
 
 // BuildUser 序列化用户
