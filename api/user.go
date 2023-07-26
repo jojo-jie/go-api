@@ -64,11 +64,11 @@ func UserLogout(c *gin.Context) {
 			cache.RedisClient.Del("user:" + key).Err()
 			c.JSON(200, serializer.Response{
 				Code: 0,
-				Msg:  "你丫的GG了",
+				Msg:  "登出成功",
 			})
 		}
 	} else {
-		c.JSON(200, serializer.Err(40010, "发生错误", nil))
+		c.JSON(200, serializer.Err(40010, "登出失败", nil))
 	}
 
 	//session 销毁
