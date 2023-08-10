@@ -27,13 +27,12 @@ type GreeterServer struct {
 }
 
 func (s *GreeterServer) SayHello(ctx context.Context, r *pb.HelloRequest) (*pb.HelloReply, error) {
-	fmt.Println(r.Req.ProtoMessage)
-	a, err := anypb.New(&pb.AnyMessageInfo{Age: "12 years"})
+	a, err := anypb.New(r.GetReq())
 	if err != nil {
 		return nil, err
 	}
 	return &pb.HelloReply{
-		Message: "hello world",
+		Message: r.GetName(),
 		Res:     a,
 	}, nil
 }

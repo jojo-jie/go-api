@@ -135,6 +135,14 @@ func main() {
 	var e5 *MyError
 	fmt.Println(errors.As(e, &e5))
 	fmt.Println(e5.Error(), e5 == e4)
+
+	ss := [3]int{1, 2, 3}
+	for i := range ss {
+		fmt.Printf("%T\n", &i)
+		defer func() {
+			fmt.Println(i)
+		}()
+	}
 }
 
 type MyError struct {

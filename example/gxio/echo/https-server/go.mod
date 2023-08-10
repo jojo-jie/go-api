@@ -1,6 +1,6 @@
 module https-server
 
-go 1.20
+go 1.21
 
 require (
 	github.com/lesismal/llib v1.1.10

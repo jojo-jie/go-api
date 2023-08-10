@@ -1,5 +1,5 @@
 module allcache
 
-go 1.20
+go 1.21
 
 require github.com/realTristan/Hermes v1.4.9

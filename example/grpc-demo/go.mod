@@ -1,6 +1,6 @@
 module grpc-demo
 
-go 1.19
+go 1.21
 
 require (
 	google.golang.org/grpc v1.53.0
