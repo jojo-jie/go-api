@@ -2,13 +2,8 @@ package main
 
 import (
 	"bytes"
-	"context"
-	"fmt"
-	"log/slog"
 	"math/rand"
-	"net"
 	_ "net/http/pprof"
-	"os"
 	"time"
 )
 
@@ -23,12 +18,12 @@ func genRandomBytes() *bytes.Buffer {
 const shortDuration = 1 * time.Millisecond
 
 func main() {
-	go func() {
+	/*go func() {
 		for i := 0; i < 10000; i++ {
 			_ = genRandomBytes()
 		}
 		time.Sleep(time.Second)
-	}()
+	}()*/
 
 	//log.Fatal(http.ListenAndServe(":6060", nil))
 
@@ -47,11 +42,11 @@ func main() {
 }
 
 func twoCtxCancel() {
-	finishedEarly := fmt.Errorf("finished early")
+	/*finishedEarly := fmt.Errorf("finished early")
 	tooSlow := fmt.Errorf("too slow")
 	ctx, _ := context.WithTimeoutCause(context.Background(), 1*time.Second, tooSlow)
 	ctx, cancel := context.WithCancelCause(ctx)
-	time.Sleep(2 * time.Millisecond)
+	time.Sleep(2 * time.Second)
 	stopf := context.AfterFunc(ctx, func() {
 		fmt.Println("stopf....")
 		cancel(finishedEarly)
@@ -59,9 +54,38 @@ func twoCtxCancel() {
 		fmt.Println(ctx.Err())
 	})
 	fmt.Println(stopf())
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
+	<-time.After(1 * time.Second)*/
+	/*slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
 	slog.Info("hello", "name", "Al")
 	slog.Error("oops", net.ErrClosed, "status", 500)
 	slog.LogAttrs(context.Background(), slog.LevelDebug, "sss",
-		slog.Int("status", 500), slog.Any("err", net.ErrClosed))
+		slog.Int("status", 500), slog.Any("err", net.ErrClosed))*/
+}
+
+type Tries struct {
+	child [26]*Tries
+	isEnd bool
+}
+
+func (t *Tries) Insert(word string) {
+	cur := t
+	for i := 0; i < len(word); i++ {
+		idx := word[i] - 'a'
+		if cur.child[idx] == nil {
+			cur.child[idx] = &Tries{}
+		}
+		cur = cur.child[idx]
+	}
+	cur.isEnd = true
+}
+
+func (t *Tries) search(word string) bool {
+	cur := t
+	for i := 0; i < len(word); i++ {
+		if cur.child[word[i]-'a'] == nil {
+			return false
+		}
+		cur = cur.child[word[i]-'a']
+	}
+	return cur.isEnd
 }
