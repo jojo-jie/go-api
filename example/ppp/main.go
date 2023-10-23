@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"fmt"
+	"io"
 	"math/rand"
 	_ "net/http/pprof"
+	"strings"
 	"time"
 )
 
@@ -60,6 +63,21 @@ func twoCtxCancel() {
 	slog.Error("oops", net.ErrClosed, "status", 500)
 	slog.LogAttrs(context.Background(), slog.LevelDebug, "sss",
 		slog.Int("status", 500), slog.Any("err", net.ErrClosed))*/
+	reader1 := strings.NewReader("Helio,")
+	reader2 := strings.NewReader("World!")
+	reader := io.MultiReader(reader1, reader2)
+	buf := make([]byte, 3)
+	for {
+		n, err := reader.Read(buf)
+		fmt.Println(buf[0])
+		if err != nil && err != io.EOF {
+			panic(err)
+		}
+		if n == 0 {
+			break
+		}
+		fmt.Println(n, string(buf[:n]), buf[0])
+	}
 }
 
 type Tries struct {
