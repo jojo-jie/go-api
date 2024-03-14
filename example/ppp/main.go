@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/mozillazg/go-pinyin"
 	"io"
 	"math/rand"
 	_ "net/http/pprof"
@@ -41,7 +42,16 @@ func main() {
 		fmt.Println(context.Cause(ctx))
 	}*/
 
+	hans := "立"
+	a := pinyin.NewArgs()
+	a.Fallback = func(r rune, a pinyin.Args) []string {
+		return []string{string(r)}
+	}
+	p := pinyin.LazyPinyin(hans, a)
+	s := strings.Join(p, " ")
+	fmt.Println(s)
 	twoCtxCancel()
+
 }
 
 func twoCtxCancel() {
