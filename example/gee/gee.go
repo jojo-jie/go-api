@@ -1,13 +1,23 @@
 package gee
 
 import (
+	"log"
 	"net/http"
 )
 
 type HandlerFunc func(*Context)
 
+type RouterGroup struct {
+	prefix      string
+	middlewares []HandlerFunc
+	parent      *RouterGroup
+	engine      *Engine
+}
+
 type Engine struct {
+	*RouterGroup
 	router *router
+	groups []*RouterGroup
 }
 
 func (engine *Engine) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -15,19 +25,35 @@ func (engine *Engine) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 }
 
 func New() *Engine {
-	return &Engine{router: newRouter()}
+	engine := &Engine{router: newRouter()}
+	engine.RouterGroup = &RouterGroup{engine: engine}
+	engine.groups = []*RouterGroup{engine.RouterGroup}
+	return engine
 }
 
-func (engine *Engine) addRoute(method, pattern string, handler HandlerFunc) {
-	engine.router.addRoute(method, pattern, handler)
+func (g *RouterGroup) Group(prefix string) *RouterGroup {
+	engine := g.engine
+	newGroup := &RouterGroup{
+		prefix: g.prefix + prefix,
+		parent: g,
+		engine: engine,
+	}
+	engine.groups = append(engine.groups, newGroup)
+	return newGroup
 }
 
-func (engine *Engine) GET(pattern string, handler HandlerFunc) {
-	engine.addRoute(http.MethodGet, pattern, handler)
+func (g *RouterGroup) addRoute(method, comp string, handler HandlerFunc) {
+	pattern := g.prefix + comp
+	log.Printf("Route %4s - %s", method, pattern)
+	g.engine.router.addRoute(method, pattern, handler)
 }
 
-func (engine *Engine) POST(pattern string, handler HandlerFunc) {
-	engine.addRoute(http.MethodPost, pattern, handler)
+func (g *RouterGroup) GET(pattern string, handler HandlerFunc) {
+	g.addRoute(http.MethodGet, pattern, handler)
+}
+
+func (g *RouterGroup) POST(pattern string, handler HandlerFunc) {
+	g.addRoute(http.MethodPost, pattern, handler)
 }
 
 func (engine *Engine) Run(addr string) error {
