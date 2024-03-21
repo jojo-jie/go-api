@@ -1,6 +1,7 @@
 package gee
 
 import (
+	"net/http"
 	"strings"
 )
 
@@ -22,7 +23,6 @@ func newRouter() *router {
 // Only one * is allowed
 func parsePattern(pattern string) []string {
 	vs := strings.Split(pattern, "/")
-
 	parts := make([]string, 0)
 	for _, item := range vs {
 		if item != "" {
@@ -73,4 +73,15 @@ func (r *router) getRoute(method string, path string) (*node, map[string]string)
 	}
 
 	return nil, nil
+}
+
+func (r *router) handle(c *Context) {
+	n, params := r.getRoute(c.Method, c.Path)
+	if n != nil {
+		c.Params = params
+		key := c.Method + "-" + n.pattern
+		r.handlers[key](c)
+	} else {
+		c.String(http.StatusNotFound, "404 NOT FOUND: %s\n", c.Path)
+	}
 }
