@@ -19,7 +19,7 @@ func TestGeeServer(t *testing.T) {
 	r := New()
 	r.Use(Logger())
 	r.GET("/index", func(c *Context) {
-		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
+		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>", nil)
 	})
 
 	v1 := r.Group("/v1")
