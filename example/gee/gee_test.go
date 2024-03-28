@@ -3,6 +3,8 @@ package gee
 import (
 	"log"
 	"net/http"
+	"runtime"
+	"sync"
 	"testing"
 	"time"
 )
@@ -51,4 +53,27 @@ func TestGeeServer(t *testing.T) {
 	}
 
 	r.Run(":9000")
+}
+
+func TestCond(t *testing.T) {
+	var mu sync.Mutex
+	c := sync.NewCond(&mu)
+	var count int
+	for i := 0; i < 10; i++ {
+		go func() {
+			c.L.Lock()
+			count++
+			c.L.Unlock()
+			c.Broadcast()
+		}()
+	}
+
+	c.L.Lock()
+	for count != 10 {
+		t.Log("主 goroutine 等待")
+		c.Wait()
+		t.Log("主 goroutine 被唤醒")
+	}
+	c.L.Unlock()
+	t.Logf("goroutine num : %d count: %d", runtime.NumGoroutine(), count)
 }
