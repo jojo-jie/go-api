@@ -75,5 +75,5 @@ func TestCond(t *testing.T) {
 		t.Log("主 goroutine 被唤醒")
 	}
 	c.L.Unlock()
-	t.Logf("goroutine num : %d count: %d", runtime.NumGoroutine(), count)
+	t.Logf("goroutine num : %d count: %d	", runtime.NumGoroutine(), count)
 }
