@@ -2,12 +2,14 @@ package dsql
 
 import (
 	"database/sql"
+	"go-api/example/dsql/dialect"
 	"go-api/example/dsql/log"
 	"go-api/example/dsql/session"
 )
 
 type Engine struct {
-	db *sql.DB
+	db      *sql.DB
+	dialect dialect.Dialect
 }
 
 func NewEngine(driver, source string) (e *Engine, err error) {
@@ -34,5 +36,5 @@ func (engine *Engine) Close() {
 }
 
 func (engine *Engine) NewSession() *session.Session {
-	return session.New(engine.db)
+	return session.New(engine.db, engine.dialect)
 }
