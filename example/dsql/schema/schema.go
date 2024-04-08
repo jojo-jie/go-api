@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"go-api/example/dsql/dialect"
+	"dsql/dialect"
 	"go/ast"
 	"reflect"
 )

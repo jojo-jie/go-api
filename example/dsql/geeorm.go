@@ -2,9 +2,9 @@ package dsql
 
 import (
 	"database/sql"
-	"go-api/example/dsql/dialect"
-	"go-api/example/dsql/log"
-	"go-api/example/dsql/session"
+	"dsql/dialect"
+	"dsql/log"
+	"dsql/session"
 )
 
 type Engine struct {

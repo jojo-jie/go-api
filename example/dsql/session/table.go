@@ -1,9 +1,9 @@
 package session
 
 import (
+	"dsql/log"
+	"dsql/schema"
 	"fmt"
-	"go-api/example/dsql/log"
-	"go-api/example/dsql/schema"
 	"reflect"
 	"strings"
 )

@@ -2,9 +2,9 @@ package session
 
 import (
 	"database/sql"
-	"go-api/example/dsql/dialect"
-	"go-api/example/dsql/log"
-	"go-api/example/dsql/schema"
+	"dsql/dialect"
+	"dsql/log"
+	"dsql/schema"
 	"strings"
 )
 
