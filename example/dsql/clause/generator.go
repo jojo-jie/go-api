@@ -17,6 +17,9 @@ func init() {
 	generators[LIMIT] = _limit
 	generators[WHERE] = _where
 	generators[ORDERBY] = _orderBy
+	generators[UPDATE] = _update
+	generators[DELETE] = _delete
+	generators[COUNT] = _count
 }
 
 func _insert(values ...any) (string, []any) {
@@ -69,4 +72,24 @@ func _where(values ...any) (string, []any) {
 
 func _orderBy(values ...any) (string, []any) {
 	return fmt.Sprintf("ORDER BY %s", values[0]), []any{}
+}
+
+func _count(values ...interface{}) (string, []any) {
+	return _select(values[0], []string{"count(*)"})
+}
+
+func _delete(values ...interface{}) (string, []any) {
+	return fmt.Sprintf("DELETE FROM %s", values[0]), []any{}
+}
+
+func _update(values ...interface{}) (string, []any) {
+	tableName := values[0]
+	m := values[1].(map[string]interface{})
+	var keys []string
+	var vars []interface{}
+	for k, v := range m {
+		keys = append(keys, k+" = ?")
+		vars = append(vars, v)
+	}
+	return fmt.Sprintf("UPDATE %s SET %s", tableName, strings.Join(keys, ", ")), vars
 }
