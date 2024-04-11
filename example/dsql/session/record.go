@@ -42,6 +42,7 @@ func (s *Session) Find(values any) error {
 		for _, name := range table.FieldNames {
 			values = append(values, dest.FieldByName(name).Addr().Interface())
 		}
+		s.CallMethod(AfterQuery, dest.Addr().Interface())
 		if err := rows.Scan(values...); err != nil {
 			return err
 		}
