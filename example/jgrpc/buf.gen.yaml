@@ -1,0 +1,14 @@
+version: v1
+plugins:
+  - plugin: go
+    out: .
+    opt:
+      - paths=import
+  - plugin: go-grpc
+    out: .
+    opt:
+      - paths=import
+  - plugin: buf.build/grpc-ecosystem/gateway:v2.19.1
+    out: .
+    opt:
+      - paths=import
