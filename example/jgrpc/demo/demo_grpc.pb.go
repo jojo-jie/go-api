@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: v1/demo.proto
+// source: proto/v1/demo.proto
 
 package demo
 
@@ -19,91 +19,91 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	StreamGreeterService_Greet_FullMethodName = "/proto.v1.StreamGreeterService/Greet"
+	GreeterService_Greet_FullMethodName = "/proto.v1.GreeterService/Greet"
 )
 
-// StreamGreeterServiceClient is the client API for StreamGreeterService service.
+// GreeterServiceClient is the client API for GreeterService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type StreamGreeterServiceClient interface {
+type GreeterServiceClient interface {
 	Greet(ctx context.Context, in *GreetRequest, opts ...grpc.CallOption) (*GreetResponse, error)
 }
 
-type streamGreeterServiceClient struct {
+type greeterServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewStreamGreeterServiceClient(cc grpc.ClientConnInterface) StreamGreeterServiceClient {
-	return &streamGreeterServiceClient{cc}
+func NewGreeterServiceClient(cc grpc.ClientConnInterface) GreeterServiceClient {
+	return &greeterServiceClient{cc}
 }
 
-func (c *streamGreeterServiceClient) Greet(ctx context.Context, in *GreetRequest, opts ...grpc.CallOption) (*GreetResponse, error) {
+func (c *greeterServiceClient) Greet(ctx context.Context, in *GreetRequest, opts ...grpc.CallOption) (*GreetResponse, error) {
 	out := new(GreetResponse)
-	err := c.cc.Invoke(ctx, StreamGreeterService_Greet_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, GreeterService_Greet_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// StreamGreeterServiceServer is the server API for StreamGreeterService service.
-// All implementations must embed UnimplementedStreamGreeterServiceServer
+// GreeterServiceServer is the server API for GreeterService service.
+// All implementations must embed UnimplementedGreeterServiceServer
 // for forward compatibility
-type StreamGreeterServiceServer interface {
+type GreeterServiceServer interface {
 	Greet(context.Context, *GreetRequest) (*GreetResponse, error)
-	mustEmbedUnimplementedStreamGreeterServiceServer()
+	mustEmbedUnimplementedGreeterServiceServer()
 }
 
-// UnimplementedStreamGreeterServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedStreamGreeterServiceServer struct {
+// UnimplementedGreeterServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedGreeterServiceServer struct {
 }
 
-func (UnimplementedStreamGreeterServiceServer) Greet(context.Context, *GreetRequest) (*GreetResponse, error) {
+func (UnimplementedGreeterServiceServer) Greet(context.Context, *GreetRequest) (*GreetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Greet not implemented")
 }
-func (UnimplementedStreamGreeterServiceServer) mustEmbedUnimplementedStreamGreeterServiceServer() {}
+func (UnimplementedGreeterServiceServer) mustEmbedUnimplementedGreeterServiceServer() {}
 
-// UnsafeStreamGreeterServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to StreamGreeterServiceServer will
+// UnsafeGreeterServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GreeterServiceServer will
 // result in compilation errors.
-type UnsafeStreamGreeterServiceServer interface {
-	mustEmbedUnimplementedStreamGreeterServiceServer()
+type UnsafeGreeterServiceServer interface {
+	mustEmbedUnimplementedGreeterServiceServer()
 }
 
-func RegisterStreamGreeterServiceServer(s grpc.ServiceRegistrar, srv StreamGreeterServiceServer) {
-	s.RegisterService(&StreamGreeterService_ServiceDesc, srv)
+func RegisterGreeterServiceServer(s grpc.ServiceRegistrar, srv GreeterServiceServer) {
+	s.RegisterService(&GreeterService_ServiceDesc, srv)
 }
 
-func _StreamGreeterService_Greet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _GreeterService_Greet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GreetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StreamGreeterServiceServer).Greet(ctx, in)
+		return srv.(GreeterServiceServer).Greet(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StreamGreeterService_Greet_FullMethodName,
+		FullMethod: GreeterService_Greet_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StreamGreeterServiceServer).Greet(ctx, req.(*GreetRequest))
+		return srv.(GreeterServiceServer).Greet(ctx, req.(*GreetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// StreamGreeterService_ServiceDesc is the grpc.ServiceDesc for StreamGreeterService service.
+// GreeterService_ServiceDesc is the grpc.ServiceDesc for GreeterService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var StreamGreeterService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.v1.StreamGreeterService",
-	HandlerType: (*StreamGreeterServiceServer)(nil),
+var GreeterService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.v1.GreeterService",
+	HandlerType: (*GreeterServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Greet",
-			Handler:    _StreamGreeterService_Greet_Handler,
+			Handler:    _GreeterService_Greet_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "v1/demo.proto",
+	Metadata: "proto/v1/demo.proto",
 }
