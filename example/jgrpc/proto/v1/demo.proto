@@ -9,6 +9,8 @@ protoc -I proto \
  */
 option go_package = "demo/";
 
+import "google/protobuf/wrappers.proto";
+
 message GreetRequest {
   string name = 1;
   repeated string snippets = 2;
@@ -19,6 +21,15 @@ message GreetResponse {
   string greet = 1;
 }
 
+message Order {
+  string id = 1;
+  repeated string items = 2;
+  string description = 3;
+  float price = 4;
+  string destination = 5;
+}
+
 service GreeterService {
   rpc Greet(GreetRequest) returns (GreetResponse);
+  rpc SearchOrders(google.protobuf.StringValue) returns (stream Order);
 }

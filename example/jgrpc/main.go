@@ -4,6 +4,8 @@ import (
 	"context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+	"io"
 	pb "jgrpc/demo"
 	"log"
 	"time"
@@ -14,7 +16,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Printf("%+v", err)
+		}
+	}(conn)
 	client := pb.NewGreeterServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -30,4 +37,18 @@ func main() {
 		panic(err)
 	}
 	log.Print("Greet Response -> : ", greet)
+
+	stream, err := client.SearchOrders(ctx, &wrapperspb.StringValue{
+		Value: "google",
+	})
+	if err != nil {
+		panic(err)
+	}
+	for {
+		order, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		log.Println("Search Result: ", order)
+	}
 }
