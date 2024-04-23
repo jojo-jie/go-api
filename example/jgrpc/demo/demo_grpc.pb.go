@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	GreeterService_Greet_FullMethodName        = "/proto.v1.GreeterService/Greet"
 	GreeterService_SearchOrders_FullMethodName = "/proto.v1.GreeterService/SearchOrders"
+	GreeterService_UpdateOrders_FullMethodName = "/proto.v1.GreeterService/updateOrders"
 )
 
 // GreeterServiceClient is the client API for GreeterService service.
@@ -30,6 +31,7 @@ const (
 type GreeterServiceClient interface {
 	Greet(ctx context.Context, in *GreetRequest, opts ...grpc.CallOption) (*GreetResponse, error)
 	SearchOrders(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (GreeterService_SearchOrdersClient, error)
+	UpdateOrders(ctx context.Context, opts ...grpc.CallOption) (GreeterService_UpdateOrdersClient, error)
 }
 
 type greeterServiceClient struct {
@@ -81,12 +83,47 @@ func (x *greeterServiceSearchOrdersClient) Recv() (*Order, error) {
 	return m, nil
 }
 
+func (c *greeterServiceClient) UpdateOrders(ctx context.Context, opts ...grpc.CallOption) (GreeterService_UpdateOrdersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &GreeterService_ServiceDesc.Streams[1], GreeterService_UpdateOrders_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &greeterServiceUpdateOrdersClient{stream}
+	return x, nil
+}
+
+type GreeterService_UpdateOrdersClient interface {
+	Send(*Order) error
+	CloseAndRecv() (*wrapperspb.StringValue, error)
+	grpc.ClientStream
+}
+
+type greeterServiceUpdateOrdersClient struct {
+	grpc.ClientStream
+}
+
+func (x *greeterServiceUpdateOrdersClient) Send(m *Order) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *greeterServiceUpdateOrdersClient) CloseAndRecv() (*wrapperspb.StringValue, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(wrapperspb.StringValue)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // GreeterServiceServer is the server API for GreeterService service.
 // All implementations must embed UnimplementedGreeterServiceServer
 // for forward compatibility
 type GreeterServiceServer interface {
 	Greet(context.Context, *GreetRequest) (*GreetResponse, error)
 	SearchOrders(*wrapperspb.StringValue, GreeterService_SearchOrdersServer) error
+	UpdateOrders(GreeterService_UpdateOrdersServer) error
 	mustEmbedUnimplementedGreeterServiceServer()
 }
 
@@ -99,6 +136,9 @@ func (UnimplementedGreeterServiceServer) Greet(context.Context, *GreetRequest) (
 }
 func (UnimplementedGreeterServiceServer) SearchOrders(*wrapperspb.StringValue, GreeterService_SearchOrdersServer) error {
 	return status.Errorf(codes.Unimplemented, "method SearchOrders not implemented")
+}
+func (UnimplementedGreeterServiceServer) UpdateOrders(GreeterService_UpdateOrdersServer) error {
+	return status.Errorf(codes.Unimplemented, "method UpdateOrders not implemented")
 }
 func (UnimplementedGreeterServiceServer) mustEmbedUnimplementedGreeterServiceServer() {}
 
@@ -152,6 +192,32 @@ func (x *greeterServiceSearchOrdersServer) Send(m *Order) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _GreeterService_UpdateOrders_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(GreeterServiceServer).UpdateOrders(&greeterServiceUpdateOrdersServer{stream})
+}
+
+type GreeterService_UpdateOrdersServer interface {
+	SendAndClose(*wrapperspb.StringValue) error
+	Recv() (*Order, error)
+	grpc.ServerStream
+}
+
+type greeterServiceUpdateOrdersServer struct {
+	grpc.ServerStream
+}
+
+func (x *greeterServiceUpdateOrdersServer) SendAndClose(m *wrapperspb.StringValue) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *greeterServiceUpdateOrdersServer) Recv() (*Order, error) {
+	m := new(Order)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // GreeterService_ServiceDesc is the grpc.ServiceDesc for GreeterService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -169,6 +235,11 @@ var GreeterService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "SearchOrders",
 			Handler:       _GreeterService_SearchOrders_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "updateOrders",
+			Handler:       _GreeterService_UpdateOrders_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "proto/v1/demo.proto",

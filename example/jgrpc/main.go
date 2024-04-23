@@ -8,6 +8,7 @@ import (
 	"io"
 	pb "jgrpc/demo"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -51,4 +52,26 @@ func main() {
 		}
 		log.Println("Search Result: ", order)
 	}
+
+	streamC, err := client.UpdateOrders(ctx)
+	if err != nil {
+		return
+	}
+	for i2 := range 3 {
+		if err := streamC.Send(&pb.Order{
+			Id:          strconv.Itoa(i2 + 1),
+			Items:       []string{"A", "B"},
+			Description: "A with B",
+			Price:       0.11,
+			Destination: "ABC",
+		}); err != nil {
+			panic(err)
+		}
+	}
+
+	res, err := streamC.CloseAndRecv()
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Update Orders Res : %s", res)
 }

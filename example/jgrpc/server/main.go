@@ -6,11 +6,32 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"io"
 	pb "jgrpc/demo"
+	"log"
 	"net"
 	"strconv"
 	"strings"
 )
+
+type Orders map[string]pb.Order
+
+var orders Orders
+
+func init() {
+	orders = make(map[string]pb.Order)
+	items := make([]string, 0)
+	items = append(items, "google", "amazon", "bing")
+	for i := range 5 {
+		id := i + 1
+		idStr := strconv.Itoa(id)
+		orders[idStr] = pb.Order{
+			Id:          idStr,
+			Items:       items,
+			Description: "demo" + idStr,
+		}
+	}
+}
 
 var _ pb.GreeterServiceServer = &GreeterServiceServerImpl{}
 
@@ -27,19 +48,6 @@ func (s *GreeterServiceServerImpl) Greet(ctx context.Context, request *pb.GreetR
 }
 
 func (s *GreeterServiceServerImpl) SearchOrders(value *wrapperspb.StringValue, stream pb.GreeterService_SearchOrdersServer) error {
-	orders := make([]pb.Order, 0)
-	items := make([]string, 0)
-	items = append(items, "google", "amazon", "bing")
-	for i := range 5 {
-		id := i + 1
-		idStr := strconv.Itoa(id)
-		orders = append(orders, pb.Order{
-			Id:          idStr,
-			Items:       items,
-			Description: "demo" + idStr,
-		})
-	}
-
 	for _, order := range orders {
 		for _, item := range order.Items {
 			if strings.Contains(item, value.Value) {
@@ -51,6 +59,19 @@ func (s *GreeterServiceServerImpl) SearchOrders(value *wrapperspb.StringValue, s
 		}
 	}
 	return nil
+}
+
+func (s *GreeterServiceServerImpl) UpdateOrders(stream pb.GreeterService_UpdateOrdersServer) error {
+	ordersStr := "Updated Order IDs :  "
+	for {
+		order, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&wrapperspb.StringValue{Value: "Orders processed " + strings.TrimRight(ordersStr, ", ")})
+		}
+		orders[order.Id] = *order
+		log.Println("Order ID ", order.Id, ": Updated")
+		ordersStr += order.Id + ", "
+	}
 }
 
 func main() {
