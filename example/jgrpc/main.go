@@ -74,4 +74,30 @@ func main() {
 		panic(err)
 	}
 	log.Printf("Update Orders Res : %s", res)
+
+	streamP, err := client.ProcessOrders(ctx)
+	if err != nil {
+		panic(err)
+	}
+	go func() {
+		if err := streamP.Send(&wrapperspb.StringValue{Value: "1"}); err != nil {
+			panic(err)
+		}
+
+		if err := streamP.Send(&wrapperspb.StringValue{Value: "4"}); err != nil {
+			panic(err)
+		}
+
+		if err := streamP.CloseSend(); err != nil {
+			panic(err)
+		}
+	}()
+
+	for {
+		combinedShipment, err := streamP.Recv()
+		if err == io.EOF {
+			break
+		}
+		log.Println("Combined shipment : ", combinedShipment)
+	}
 }

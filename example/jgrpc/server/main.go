@@ -14,6 +14,10 @@ import (
 	"strings"
 )
 
+const (
+	orderBatchSize = 3
+)
+
 type Orders map[string]pb.Order
 
 var orders Orders
@@ -28,7 +32,7 @@ func init() {
 		orders[idStr] = pb.Order{
 			Id:          idStr,
 			Items:       items,
-			Description: "demo" + idStr,
+			Description: "ABCDEFG",
 		}
 	}
 }
@@ -72,6 +76,54 @@ func (s *GreeterServiceServerImpl) UpdateOrders(stream pb.GreeterService_UpdateO
 		log.Println("Order ID ", order.Id, ": Updated")
 		ordersStr += order.Id + ", "
 	}
+}
+
+func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_ProcessOrdersServer) error {
+	batchMarker := 1
+	var combinedShipmentMap = make(map[string]pb.CombinedShipment)
+	for {
+		orderId, err := stream.Recv()
+		log.Printf("Reading Proc order : %s", orderId)
+		if err == io.EOF {
+			log.Printf("EOF : %s", orderId)
+			for _, shipment := range combinedShipmentMap {
+				if err := stream.Send(&shipment); err != nil {
+					return err
+				}
+			}
+		}
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		destination := orders[orderId.GetValue()].Destination
+		shipment, found := combinedShipmentMap[destination]
+		if found {
+			ord := orders[orderId.GetValue()]
+			shipment.OrderList = append(shipment.OrderList, &ord)
+			combinedShipmentMap[destination] = shipment
+		} else {
+			comShip := pb.CombinedShipment{Id: "cmb - " + (orders[orderId.GetValue()].Destination), Status: "Processed!"}
+			ord := orders[orderId.GetValue()]
+			comShip.OrderList = append(shipment.OrderList, &ord)
+			combinedShipmentMap[destination] = comShip
+			log.Print(len(comShip.OrderList), comShip.GetId())
+		}
+
+		if batchMarker == orderBatchSize {
+			for _, comb := range combinedShipmentMap {
+				log.Printf("Shipping : %v -> %v", comb.Id, len(comb.OrderList))
+				if err := stream.Send(&comb); err != nil {
+					return err
+				}
+			}
+			batchMarker = 0
+			combinedShipmentMap = make(map[string]pb.CombinedShipment)
+		} else {
+			batchMarker++
+		}
+	}
+
 }
 
 func main() {
