@@ -12,6 +12,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -127,7 +128,10 @@ func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_Proces
 }
 
 func main() {
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(orderUnaryServerInterceptor),
+		grpc.StreamInterceptor(orderStreamServerInterceptor),
+	)
 	pb.RegisterGreeterServiceServer(s, &GreeterServiceServerImpl{})
 	listen, err := net.Listen("tcp", ":8009")
 	if err != nil {
@@ -136,5 +140,65 @@ func main() {
 	err = s.Serve(listen)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func orderUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	// Pre-processing logic
+	s := time.Now()
+
+	// Invoking the handler to complete the normal execution of a unary RPC.
+	m, err := handler(ctx, req)
+
+	// Post processing logic
+	log.Printf("Method: %s, req: %s, resp: %s, latency: %s\n",
+		info.FullMethod, req, m, time.Now().Sub(s))
+
+	return m, err
+}
+
+func orderStreamServerInterceptor(srv interface{},
+	ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+
+	// Pre-processing logic
+	s := time.Now()
+	nss := newWrappedStream(ss)
+	// Invoking the StreamHandler to complete the execution of RPC invocation
+	err := handler(srv, ss)
+
+	// Post processing logic
+	log.Printf("Method: %s, req: %+v, resp: %+v, latency: %s\n",
+		info.FullMethod, nss.Recv, nss.Send, time.Now().Sub(s))
+
+	return err
+}
+
+type wrappedStream struct {
+	Recv []interface{}
+	Send []interface{}
+	grpc.ServerStream
+}
+
+func (w *wrappedStream) RecvMsg(m interface{}) error {
+	err := w.ServerStream.RecvMsg(m)
+
+	w.Recv = append(w.Recv, m)
+
+	return err
+}
+
+func (w *wrappedStream) SendMsg(m interface{}) error {
+	err := w.ServerStream.SendMsg(m)
+
+	w.Send = append(w.Send, m)
+
+	return err
+}
+
+func newWrappedStream(s grpc.ServerStream) *wrappedStream {
+	return &wrappedStream{
+		make([]interface{}, 0),
+		make([]interface{}, 0),
+		s,
 	}
 }
