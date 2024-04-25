@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -8,6 +9,7 @@ import (
 	"io"
 	pb "jgrpc/demo"
 	"log"
+	"slices"
 	"strconv"
 	"time"
 )
@@ -104,6 +106,29 @@ func main() {
 		}
 		log.Println("Combined shipment : ", combinedShipment)
 	}
+
+	orders := []Order{
+		{"foo", "alice", 1.00},
+		{"bar", "bob", 3.00},
+		{"baz", "carol", 4.00},
+		{"foo", "alice", 2.00},
+		{"bar", "carol", 1.00},
+		{"foo", "bob", 4.00},
+	}
+
+	slices.SortFunc(orders, func(a, b Order) int {
+		return cmp.Or(
+			cmp.Compare(a.Customer, b.Customer),
+			cmp.Compare(a.Product, b.Product),
+			cmp.Compare(b.Price, a.Price),
+		)
+	})
+}
+
+type Order struct {
+	Product  string
+	Customer string
+	Price    float64
 }
 
 func orderUnaryClientInterceptor(ctx context.Context, method string, req, reply interface{},
