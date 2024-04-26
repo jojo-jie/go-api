@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	pb "jgrpc/demo"
@@ -89,13 +92,14 @@ func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_Proces
 			log.Printf("EOF : %s", orderId)
 			for _, shipment := range combinedShipmentMap {
 				if err := stream.Send(&shipment); err != nil {
-					return err
+					return status.New(codes.InvalidArgument,
+						err.Error()).Err()
 				}
 			}
 		}
 		if err != nil {
-			log.Println(err)
-			return err
+			return status.New(codes.InvalidArgument,
+				err.Error()).Err()
 		}
 		destination := orders[orderId.GetValue()].Destination
 		shipment, found := combinedShipmentMap[destination]
@@ -115,7 +119,17 @@ func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_Proces
 			for _, comb := range combinedShipmentMap {
 				log.Printf("Shipping : %v -> %v", comb.Id, len(comb.OrderList))
 				if err := stream.Send(&comb); err != nil {
-					return err
+					st := status.New(codes.InvalidArgument,
+						"Order does not exist. order id: ")
+					details, err := st.WithDetails(&epb.BadRequest_FieldViolation{
+						Field:       "ID",
+						Description: fmt.Sprintf("Order ID received is not valid"),
+					})
+					if err == nil {
+						return details.Err()
+					}
+
+					return st.Err()
 				}
 			}
 			batchMarker = 0
@@ -124,7 +138,6 @@ func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_Proces
 			batchMarker++
 		}
 	}
-
 }
 
 func main() {
@@ -166,7 +179,7 @@ func orderStreamServerInterceptor(srv interface{},
 	// Invoking the StreamHandler to complete the execution of RPC invocation
 	err := handler(srv, ss)
 
-	// Post processing logic
+	// PostProcessing logic
 	log.Printf("Method: %s, req: %+v, resp: %+v, latency: %s\n",
 		info.FullMethod, nss.Recv, nss.Send, time.Now().Sub(s))
 

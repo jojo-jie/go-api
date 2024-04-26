@@ -3,8 +3,11 @@ package main
 import (
 	"cmp"
 	"context"
+	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	pb "jgrpc/demo"
@@ -83,15 +86,45 @@ func main() {
 
 	streamP, err := client.ProcessOrders(ctx)
 	if err != nil {
-		panic(err)
+		st, ok := status.FromError(err)
+		if !ok {
+			log.Println(err)
+			return
+		}
+
+		switch st.Code() {
+		case codes.InvalidArgument:
+			for _, d := range st.Details() {
+				switch info := d.(type) {
+				case *epb.BadRequest_FieldViolation:
+					log.Printf("Request Field Invalid: %s", info)
+				default:
+					log.Printf("Unexpected error type: %s", info)
+				}
+			}
+		default:
+			log.Printf("Unhandled error : %s ", st.String())
+		}
+
+		return
 	}
 	go func() {
 		if err := streamP.Send(&wrapperspb.StringValue{Value: "1"}); err != nil {
-			panic(err)
+			st, ok := status.FromError(err)
+			if ok && st.Code() == codes.InvalidArgument {
+				log.Println(st.Code(), st.Message())
+			} else {
+				log.Println(err)
+			}
 		}
 
 		if err := streamP.Send(&wrapperspb.StringValue{Value: "4"}); err != nil {
-			panic(err)
+			st, ok := status.FromError(err)
+			if ok && st.Code() == codes.InvalidArgument {
+				log.Println(st.Code(), st.Message())
+			} else {
+				log.Println(err)
+			}
 		}
 
 		if err := streamP.CloseSend(); err != nil {
