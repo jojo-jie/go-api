@@ -7,6 +7,7 @@ import (
 	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
@@ -47,8 +48,29 @@ type GreeterServiceServerImpl struct {
 	pb.UnimplementedGreeterServiceServer
 }
 
+// Greet Header和Trailer区别
+// 根本区别：发送的时机不同！
+//
+// ✨ headers会在下面三种场景下被发送
+//
+// SendHeader() 被调用时（包含grpc.SendHeader和stream.SendHeader)
+// 第一个响应被发送时
+// RPC结束时（包含成功或失败）
+// ✨ trailer会在rpc返回的时候，即这个请求结束的时候被发送
+//
+// 差异在流式RPC（streaming RPC）中比较明显：
+//
+// 因为trailer是在服务端发送完请求之后才发送的，所以client获取trailer的时候需要在stream.CloseAndRecv或者stream.Recv 返回非nil错误 (包含 io.EOF)之后
+//
+// 如果stream.CloseAndRecv之前调用stream.Trailer()获取的是空
 func (s *GreeterServiceServerImpl) Greet(ctx context.Context, request *pb.GreetRequest) (*pb.GreetResponse, error) {
-	//TODO implement me
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		log.Printf("from md %+v\n", md.Get("version"))
+	}
+
+	header := metadata.Join(md, metadata.Pairs("header-key", "client-greet-v1"))
+	grpc.SendHeader(ctx, header)
 	greet, _ := json.Marshal(request.List)
 	return &pb.GreetResponse{
 		Greet: string(greet),

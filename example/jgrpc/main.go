@@ -7,15 +7,19 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	pb "jgrpc/demo"
 	"log"
+	"os"
 	"slices"
 	"strconv"
 	"time"
 )
+
+var header, trailer metadata.MD
 
 func main() {
 	conn, err := grpc.Dial("127.0.0.1:8009",
@@ -38,15 +42,21 @@ func main() {
 	list := make(map[string]string)
 	list["id"] = "1"
 	list["t"] = "cc"
+	mdBase := metadata.New(map[string]string{"version": "v1"})
+	mdF := metadata.Pairs("version", "00001")
+	md := metadata.Join(mdBase, mdF)
+	log.Printf("matadata info %+v", md)
+	ctx = metadata.NewOutgoingContext(ctx, md) //AppendToOutgoingContext
 	greet, err := client.Greet(ctx, &pb.GreetRequest{
 		Name:     "jojo",
 		Snippets: make([]string, 0),
 		List:     list,
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
 		panic(err)
 	}
-	log.Print("Greet Response -> : ", greet)
+	log.Printf("Greet Response -> : %+v\n, header ->: %+v", greet, header)
+	os.Exit(-1)
 
 	stream, err := client.SearchOrders(ctx, &wrapperspb.StringValue{
 		Value: "google",
@@ -216,7 +226,7 @@ func orderStreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc,
 
 	cs, err := streamer(ctx, desc, cc, method, opts...)
 
-	// Post processing logic
+	// PostProcessing logic
 	log.Printf("method: %s, latency: %s\n", method, time.Now().Sub(s))
 
 	return newWrappedStream(method, cs), err
