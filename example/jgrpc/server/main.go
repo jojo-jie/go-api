@@ -7,6 +7,7 @@ import (
 	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -163,9 +164,14 @@ func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_Proces
 }
 
 func main() {
+	creds, err := credentials.NewServerTLSFromFile("./x509/server.crt", "./x509/server.key")
+	if err != nil {
+		panic(err)
+	}
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(orderUnaryServerInterceptor),
 		grpc.StreamInterceptor(orderStreamServerInterceptor),
+		grpc.Creds(creds),
 	)
 	pb.RegisterGreeterServiceServer(s, &GreeterServiceServerImpl{})
 	listen, err := net.Listen("tcp", ":8009")
