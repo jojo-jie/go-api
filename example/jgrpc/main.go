@@ -3,6 +3,7 @@ package main
 import (
 	"cmp"
 	"context"
+	"encoding/base64"
 	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,10 @@ var header, trailer metadata.MD
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	auth := BasicAuthentication{
+		username: "admin",
+		password: "admin",
+	}
 	creds, err := credentials.NewClientTLSFromFile("./x509/server.crt", "www.demo.com")
 	if err != nil {
 		panic(err)
@@ -33,6 +38,7 @@ func main() {
 		grpc.WithUnaryInterceptor(orderUnaryClientInterceptor),
 		grpc.WithStreamInterceptor(orderStreamClientInterceptor),
 		grpc.WithBlock(),
+		grpc.WithPerRPCCredentials(auth),
 	)
 	if err != nil {
 		panic(err)
@@ -235,4 +241,23 @@ func orderStreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc,
 	log.Printf("method: %s, latency: %s\n", method, time.Now().Sub(s))
 
 	return newWrappedStream(method, cs), err
+}
+
+var _ credentials.PerRPCCredentials = BasicAuthentication{}
+
+type BasicAuthentication struct {
+	password string
+	username string
+}
+
+func (b BasicAuthentication) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	auth := b.username + ":" + b.password
+	enc := base64.StdEncoding.EncodeToString([]byte(auth))
+	return map[string]string{
+		"authorization": "Basic " + enc,
+	}, nil
+}
+
+func (b BasicAuthentication) RequireTransportSecurity() bool {
+	return true
 }
