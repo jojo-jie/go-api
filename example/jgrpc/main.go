@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -33,12 +34,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	balance := map[string]string{
+		"loadBalancingPolicy": "round_robin",
+	}
+	b, _ := json.Marshal(balance)
 	conn, err := grpc.Dial("127.0.0.1:8009",
 		grpc.WithTransportCredentials(creds),
 		grpc.WithUnaryInterceptor(orderUnaryClientInterceptor),
 		grpc.WithStreamInterceptor(orderStreamClientInterceptor),
 		grpc.WithBlock(),
 		grpc.WithPerRPCCredentials(auth),
+		grpc.WithDefaultServiceConfig(string(b)),
 	)
 	if err != nil {
 		panic(err)
