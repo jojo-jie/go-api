@@ -26,7 +26,7 @@ message Order {
   repeated string items = 2;
   string description = 3;
   float price = 4;
-  string destination = 5;
+  google.protobuf.StringValue destination = 5;
 }
 
 message CombinedShipment {

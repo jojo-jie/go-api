@@ -124,14 +124,14 @@ func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_Proces
 			return status.New(codes.InvalidArgument,
 				err.Error()).Err()
 		}
-		destination := orders[orderId.GetValue()].Destination
+		destination := orders[orderId.GetValue()].Destination.GetValue()
 		shipment, found := combinedShipmentMap[destination]
 		if found {
 			ord := orders[orderId.GetValue()]
 			shipment.OrderList = append(shipment.OrderList, &ord)
 			combinedShipmentMap[destination] = shipment
 		} else {
-			comShip := pb.CombinedShipment{Id: "cmb - " + (orders[orderId.GetValue()].Destination), Status: "Processed!"}
+			comShip := pb.CombinedShipment{Id: "cmb - " + (orders[orderId.GetValue()].Destination.GetValue()), Status: "Processed!"}
 			ord := orders[orderId.GetValue()]
 			comShip.OrderList = append(shipment.OrderList, &ord)
 			combinedShipmentMap[destination] = comShip

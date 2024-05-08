@@ -94,12 +94,13 @@ func main() {
 		return
 	}
 	for i2 := range 3 {
+		destination := &wrapperspb.StringValue{Value: "ABC"}
 		if err := streamC.Send(&pb.Order{
 			Id:          strconv.Itoa(i2 + 1),
 			Items:       []string{"A", "B"},
 			Description: "A with B",
 			Price:       0.11,
-			Destination: "ABC",
+			Destination: destination,
 		}); err != nil {
 			panic(err)
 		}
