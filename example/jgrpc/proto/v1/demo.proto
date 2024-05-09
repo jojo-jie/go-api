@@ -10,6 +10,7 @@ protoc -I proto \
 option go_package = "demo/";
 
 import "google/protobuf/wrappers.proto";
+import "google/api/annotations.proto";
 
 message GreetRequest {
   string name = 1;
@@ -44,4 +45,9 @@ service GreeterService {
       returns (google.protobuf.StringValue);
   rpc ProcessOrders(stream google.protobuf.StringValue)
       returns (stream CombinedShipment);
+  rpc GetOrder(google.protobuf.StringValue) returns (Order) {
+    option(google.api.http) = {
+      get: "/v1/getOrder"
+    };
+  }
 }

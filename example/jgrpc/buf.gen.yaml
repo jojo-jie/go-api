@@ -8,7 +8,8 @@ plugins:
     out: .
     opt:
       - paths=import
-  - plugin: buf.build/grpc-ecosystem/gateway:v2.19.1
+  - name: grpc-gateway
     out: .
     opt:
       - paths=import
+      - generate_unbound_methods=true
