@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: proto/v1/demo.proto
+// source: v1/demo.proto
 
 package demo
 
@@ -24,6 +24,7 @@ const (
 	GreeterService_SearchOrders_FullMethodName  = "/proto.v1.GreeterService/SearchOrders"
 	GreeterService_UpdateOrders_FullMethodName  = "/proto.v1.GreeterService/UpdateOrders"
 	GreeterService_ProcessOrders_FullMethodName = "/proto.v1.GreeterService/ProcessOrders"
+	GreeterService_GetOrder_FullMethodName      = "/proto.v1.GreeterService/GetOrder"
 )
 
 // GreeterServiceClient is the client API for GreeterService service.
@@ -34,6 +35,7 @@ type GreeterServiceClient interface {
 	SearchOrders(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (GreeterService_SearchOrdersClient, error)
 	UpdateOrders(ctx context.Context, opts ...grpc.CallOption) (GreeterService_UpdateOrdersClient, error)
 	ProcessOrders(ctx context.Context, opts ...grpc.CallOption) (GreeterService_ProcessOrdersClient, error)
+	GetOrder(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Order, error)
 }
 
 type greeterServiceClient struct {
@@ -150,6 +152,15 @@ func (x *greeterServiceProcessOrdersClient) Recv() (*CombinedShipment, error) {
 	return m, nil
 }
 
+func (c *greeterServiceClient) GetOrder(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Order, error) {
+	out := new(Order)
+	err := c.cc.Invoke(ctx, GreeterService_GetOrder_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GreeterServiceServer is the server API for GreeterService service.
 // All implementations must embed UnimplementedGreeterServiceServer
 // for forward compatibility
@@ -158,6 +169,7 @@ type GreeterServiceServer interface {
 	SearchOrders(*wrapperspb.StringValue, GreeterService_SearchOrdersServer) error
 	UpdateOrders(GreeterService_UpdateOrdersServer) error
 	ProcessOrders(GreeterService_ProcessOrdersServer) error
+	GetOrder(context.Context, *wrapperspb.StringValue) (*Order, error)
 	mustEmbedUnimplementedGreeterServiceServer()
 }
 
@@ -176,6 +188,9 @@ func (UnimplementedGreeterServiceServer) UpdateOrders(GreeterService_UpdateOrder
 }
 func (UnimplementedGreeterServiceServer) ProcessOrders(GreeterService_ProcessOrdersServer) error {
 	return status.Errorf(codes.Unimplemented, "method ProcessOrders not implemented")
+}
+func (UnimplementedGreeterServiceServer) GetOrder(context.Context, *wrapperspb.StringValue) (*Order, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrder not implemented")
 }
 func (UnimplementedGreeterServiceServer) mustEmbedUnimplementedGreeterServiceServer() {}
 
@@ -281,6 +296,24 @@ func (x *greeterServiceProcessOrdersServer) Recv() (*wrapperspb.StringValue, err
 	return m, nil
 }
 
+func _GreeterService_GetOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServiceServer).GetOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GreeterService_GetOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServiceServer).GetOrder(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GreeterService_ServiceDesc is the grpc.ServiceDesc for GreeterService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -291,6 +324,10 @@ var GreeterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Greet",
 			Handler:    _GreeterService_Greet_Handler,
+		},
+		{
+			MethodName: "GetOrder",
+			Handler:    _GreeterService_GetOrder_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -311,5 +348,5 @@ var GreeterService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "proto/v1/demo.proto",
+	Metadata: "v1/demo.proto",
 }
