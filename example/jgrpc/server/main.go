@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -15,6 +16,7 @@ import (
 	pb "jgrpc/demo"
 	"log"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -163,8 +165,13 @@ func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_Proces
 	}
 }
 
+func (s *GreeterServiceServerImpl) GetOrder(ctx context.Context, value *wrapperspb.StringValue) (*pb.Order, error) {
+	//TODO implement me
+	return &pb.Order{}, nil
+}
+
 func main() {
-	creds, err := credentials.NewServerTLSFromFile("./x509/server.crt", "./x509/server.key")
+	/*creds, err := credentials.NewServerTLSFromFile("./x509/server.crt", "./x509/server.key")
 	if err != nil {
 		panic(err)
 	}
@@ -181,7 +188,43 @@ func main() {
 	err = s.Serve(listen)
 	if err != nil {
 		panic(err)
+	}*/
+
+	grpcPort, gwPort := ":8009", ":8010"
+	go func() {
+		lis, err := net.Listen("tcp", grpcPort)
+		if err != nil {
+			panic(err)
+		}
+
+		s := grpc.NewServer()
+
+		pb.RegisterGreeterServiceServer(s, &GreeterServiceServerImpl{})
+		if err := s.Serve(lis); err != nil {
+			panic(err)
+		}
+	}()
+
+	conn, err := grpc.DialContext(
+		context.Background(),
+		"127.0.0.1"+grpcPort,
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		panic(err)
 	}
+
+	gwmux := runtime.NewServeMux()
+	err = pb.RegisterGreeterServiceHandler(context.Background(), gwmux, conn)
+	if err != nil {
+		panic(err)
+	}
+	if err != nil {
+		panic(err)
+	}
+
+	http.ListenAndServe(gwPort, gwmux)
 }
 
 func orderUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
