@@ -47,7 +47,20 @@ service GreeterService {
       returns (stream CombinedShipment);
   rpc GetOrder(google.protobuf.StringValue) returns (Order) {
     option(google.api.http) = {
-      get: "/v1/getOrder"
+      get: "/v1/getOrder/{value}"
+    };
+  }
+  rpc addOrder1(Order) returns (google.protobuf.StringValue) {
+    option (google.api.http) = {
+      post : "/v1/addOrder1"
+      body : "*"
+    };
+  }
+
+  rpc addOrder2(Order) returns (google.protobuf.StringValue) {
+    option (google.api.http) = {
+      post : "/v1/addOrder2"
+      body : "order"
     };
   }
 }

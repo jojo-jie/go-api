@@ -225,6 +225,15 @@ func main() {
 	}
 
 	http.ListenAndServe(gwPort, gwmux)
+
+	/*gwmux := runtime.NewServeMux()
+
+	err := pb.RegisterGreeterServiceHandlerServer(context.Background(), gwmux, &GreeterServiceServerImpl{})
+	if err != nil {
+		panic(err)
+	}
+
+	http.ListenAndServe(":8010", gwmux)*/
 }
 
 func orderUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -234,7 +243,7 @@ func orderUnaryServerInterceptor(ctx context.Context, req interface{}, info *grp
 	// Invoking the handler to complete the normal execution of a unary RPC.
 	m, err := handler(ctx, req)
 
-	// Post processing logic
+	// Postprocessing logic
 	log.Printf("Method: %s, req: %s, resp: %s, latency: %s\n",
 		info.FullMethod, req, m, time.Now().Sub(s))
 
