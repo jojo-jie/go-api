@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	anypb "google.golang.org/protobuf/types/known/anypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -25,6 +26,7 @@ const (
 	GreeterService_UpdateOrders_FullMethodName  = "/proto.v1.GreeterService/UpdateOrders"
 	GreeterService_ProcessOrders_FullMethodName = "/proto.v1.GreeterService/ProcessOrders"
 	GreeterService_GetOrder_FullMethodName      = "/proto.v1.GreeterService/GetOrder"
+	GreeterService_AddOrder_FullMethodName      = "/proto.v1.GreeterService/addOrder"
 )
 
 // GreeterServiceClient is the client API for GreeterService service.
@@ -36,6 +38,7 @@ type GreeterServiceClient interface {
 	UpdateOrders(ctx context.Context, opts ...grpc.CallOption) (GreeterService_UpdateOrdersClient, error)
 	ProcessOrders(ctx context.Context, opts ...grpc.CallOption) (GreeterService_ProcessOrdersClient, error)
 	GetOrder(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Order, error)
+	AddOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*anypb.Any, error)
 }
 
 type greeterServiceClient struct {
@@ -161,6 +164,15 @@ func (c *greeterServiceClient) GetOrder(ctx context.Context, in *wrapperspb.Stri
 	return out, nil
 }
 
+func (c *greeterServiceClient) AddOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*anypb.Any, error) {
+	out := new(anypb.Any)
+	err := c.cc.Invoke(ctx, GreeterService_AddOrder_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GreeterServiceServer is the server API for GreeterService service.
 // All implementations must embed UnimplementedGreeterServiceServer
 // for forward compatibility
@@ -170,6 +182,7 @@ type GreeterServiceServer interface {
 	UpdateOrders(GreeterService_UpdateOrdersServer) error
 	ProcessOrders(GreeterService_ProcessOrdersServer) error
 	GetOrder(context.Context, *wrapperspb.StringValue) (*Order, error)
+	AddOrder(context.Context, *Order) (*anypb.Any, error)
 	mustEmbedUnimplementedGreeterServiceServer()
 }
 
@@ -191,6 +204,9 @@ func (UnimplementedGreeterServiceServer) ProcessOrders(GreeterService_ProcessOrd
 }
 func (UnimplementedGreeterServiceServer) GetOrder(context.Context, *wrapperspb.StringValue) (*Order, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrder not implemented")
+}
+func (UnimplementedGreeterServiceServer) AddOrder(context.Context, *Order) (*anypb.Any, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddOrder not implemented")
 }
 func (UnimplementedGreeterServiceServer) mustEmbedUnimplementedGreeterServiceServer() {}
 
@@ -314,6 +330,24 @@ func _GreeterService_GetOrder_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GreeterService_AddOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Order)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServiceServer).AddOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GreeterService_AddOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServiceServer).AddOrder(ctx, req.(*Order))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GreeterService_ServiceDesc is the grpc.ServiceDesc for GreeterService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -328,6 +362,10 @@ var GreeterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrder",
 			Handler:    _GreeterService_GetOrder_Handler,
+		},
+		{
+			MethodName: "addOrder",
+			Handler:    _GreeterService_AddOrder_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

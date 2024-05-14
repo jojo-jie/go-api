@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	pb "jgrpc/demo"
@@ -166,8 +167,13 @@ func (s *GreeterServiceServerImpl) ProcessOrders(stream pb.GreeterService_Proces
 }
 
 func (s *GreeterServiceServerImpl) GetOrder(ctx context.Context, value *wrapperspb.StringValue) (*pb.Order, error) {
-	//TODO implement me
-	return &pb.Order{}, nil
+	return &pb.Order{
+		Destination: value,
+	}, nil
+}
+
+func (s *GreeterServiceServerImpl) AddOrder(ctx context.Context, order *pb.Order) (*anypb.Any, error) {
+	return anypb.New(order)
 }
 
 func main() {
