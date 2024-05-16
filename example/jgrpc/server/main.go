@@ -173,6 +173,7 @@ func (s *GreeterServiceServerImpl) GetOrder(ctx context.Context, value *wrappers
 }
 
 func (s *GreeterServiceServerImpl) AddOrder(ctx context.Context, order *pb.Order) (*anypb.Any, error) {
+	log.Printf("%+v\n", order)
 	return anypb.New(order)
 }
 
