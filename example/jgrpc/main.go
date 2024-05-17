@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/sqids/sqids-go"
 	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -56,8 +57,10 @@ func main() {
 		}
 	}(conn)
 	client := pb.NewGreeterServiceClient(conn)
+	s, _ := sqids.New()
+	id, _ := s.Encode([]uint64{99829})
 	list := make(map[string]string)
-	list["id"] = "1"
+	list["id"] = id
 	list["t"] = "cc"
 	mdBase := metadata.New(map[string]string{"version": "v1"})
 	mdF := metadata.Pairs("version", "00001")
