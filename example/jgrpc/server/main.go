@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"golang.org/x/sync/errgroup"
 	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -301,4 +302,19 @@ func newWrappedStream(s grpc.ServerStream) *wrappedStream {
 		make([]interface{}, 0),
 		s,
 	}
+}
+
+func transform[A, B any](xs []A, f func(A) B) []B {
+	ret := make([]B, len(xs))
+	g := new(errgroup.Group)
+	for i, x := range xs {
+		g.Go(func() error {
+			ret[i] = f(x)
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		panic(err)
+	}
+	return ret
 }

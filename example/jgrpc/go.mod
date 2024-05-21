@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/sqids/sqids-go v0.4.1
+	golang.org/x/sync v0.6.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240227224415-6ceb2ff114de
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de
 	google.golang.org/grpc v1.63.2
