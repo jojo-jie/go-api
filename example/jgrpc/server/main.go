@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -317,4 +318,19 @@ func transform[A, B any](xs []A, f func(A) B) []B {
 		panic(err)
 	}
 	return ret
+}
+
+func atomicAs() {
+	var ops atomic.Uint64
+	var g errgroup.Group
+	for i := 0; i < 50; i++ {
+		g.Go(func() error {
+			for c := 0; c < 1000; c++ {
+				ops.Add(1)
+			}
+			return nil
+		})
+	}
+	g.Wait()
+	fmt.Println("ops:", ops.Load())
 }
