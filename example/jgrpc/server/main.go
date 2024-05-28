@@ -71,17 +71,22 @@ type GreeterServiceServerImpl struct {
 //
 // 如果stream.CloseAndRecv之前调用stream.Trailer()获取的是空
 func (s *GreeterServiceServerImpl) Greet(ctx context.Context, request *pb.GreetRequest) (*pb.GreetResponse, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		log.Printf("from md %+v\n", md.Get("version"))
-	}
+	select {
+	case <-time.After(3 * time.Second):
+		return nil, status.Error(codes.DeadlineExceeded, "timeout")
+	case <-ctx.Done():
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			log.Printf("from md %+v\n", md.Get("version"))
+		}
 
-	header := metadata.Join(md, metadata.Pairs("header-key", "client-greet-v1"))
-	grpc.SendHeader(ctx, header)
-	greet, _ := json.Marshal(request.List)
-	return &pb.GreetResponse{
-		Greet: string(greet),
-	}, nil
+		header := metadata.Join(md, metadata.Pairs("header-key", "client-greet-v1"))
+		grpc.SendHeader(ctx, header)
+		greet, _ := json.Marshal(request.List)
+		return &pb.GreetResponse{
+			Greet: string(greet),
+		}, nil
+	}
 }
 
 func (s *GreeterServiceServerImpl) SearchOrders(value *wrapperspb.StringValue, stream pb.GreeterService_SearchOrdersServer) error {
