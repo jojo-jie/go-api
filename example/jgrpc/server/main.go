@@ -340,7 +340,7 @@ func atomicAs() {
 	g.Wait()
 	fmt.Println("ops:", ops.Load())
 
-	data := "abc123!?$*&()'-=@~"
+	data := "5oiR5Lus5LiN5piv54mb6ams5oiR5Lus5piv5Lq6"
 	sEnc := base64.StdEncoding.EncodeToString([]byte(data))
 	fmt.Println(sEnc)
 	sDec, _ := base64.StdEncoding.DecodeString(sEnc)
@@ -390,4 +390,39 @@ func intSeq() func() int {
 		i++
 		return i
 	}
+}
+
+func MapKeys[K comparable, V any](m map[K]V) []K {
+	r := make([]K, 0, len(m))
+	for k := range m {
+		r = append(r, k)
+	}
+	return r
+}
+
+type List[T any] struct {
+	head, tail *element[T]
+}
+
+type element[T any] struct {
+	next *element[T]
+	val  T
+}
+
+func (lst *List[T]) Push(v T) {
+	if lst.tail == nil {
+		lst.head = &element[T]{val: v}
+		lst.tail = lst.head
+	} else {
+		lst.tail.next = &element[T]{val: v}
+		lst.tail = lst.tail.next
+	}
+}
+
+func (lst *List[T]) GetAll() []T {
+	var elems []T
+	for e := lst.head; e != nil; e = e.next {
+		elems = append(elems, e.val)
+	}
+	return elems
 }
