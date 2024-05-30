@@ -263,6 +263,8 @@ type BasicAuthentication struct {
 func (b BasicAuthentication) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
 	auth := b.username + ":" + b.password
 	enc := base64.StdEncoding.EncodeToString([]byte(auth))
+	ctx = context.WithValue(ctx, "Authorization", enc)
+	ctx.Value("Authorization")
 	return map[string]string{
 		"authorization": "Basic " + enc,
 	}, nil
