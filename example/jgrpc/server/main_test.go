@@ -30,7 +30,7 @@ func TestComp(t *testing.T) {
 	t.Log(reflect.ValueOf(a).Equal(reflect.ValueOf(b)))
 	v := reflect.ValueOf(a)
 	t.Log(v.Type())
-	//t.Log(compare(a, b))
+	t.Log(compare(a, b))
 }
 
 func compare(a, b any) bool {
