@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"math/rand"
 	"reflect"
 	"sync/atomic"
@@ -108,4 +110,35 @@ type writeOp struct {
 	key  int
 	val  int
 	resp chan bool
+}
+
+func TestCtx(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
+	printCh := make(chan int)
+	g := errgroup.Group{}
+	g.Go(func() error {
+		doAnother(ctx, printCh, t)
+		return nil
+	})
+	for num := range 3 {
+		printCh <- num
+	}
+	cancel()
+	g.Wait()
+	t.Logf("doSomething: finished\n")
+}
+
+func doAnother(ctx context.Context, printCh <-chan int, t *testing.T) {
+	for {
+		select {
+		case num := <-printCh:
+			t.Logf("doAnother: %d\n", num)
+		case <-ctx.Done():
+			if err := ctx.Err(); err != nil {
+				t.Logf("doAnother err: %s\n", err)
+			}
+			t.Logf("doAnother: finished\n")
+			return
+		}
+	}
 }
