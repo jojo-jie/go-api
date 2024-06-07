@@ -115,7 +115,8 @@ type writeOp struct {
 func TestCtx(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
 	printCh := make(chan int)
-	g := errgroup.Group{}
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
 	g.Go(func() error {
 		doAnother(ctx, printCh, t)
 		return nil
@@ -124,8 +125,8 @@ func TestCtx(t *testing.T) {
 		printCh <- num
 	}
 	cancel()
-	g.Wait()
-	t.Logf("doSomething: finished\n")
+	err := g.Wait()
+	t.Logf("doSomething: finished err:%+v\n", err)
 
 	c1 := make(chan string, 1)
 	go func() {
