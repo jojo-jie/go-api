@@ -170,7 +170,6 @@ func doAnother(ctx context.Context, printCh <-chan int, t *testing.T) {
 func TestZeroStruct(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
-		time.Sleep(time.Second)
 		t.Logf("...\n")
 		close(done)
 	}()
