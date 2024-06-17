@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
 	"math/rand"
 	"reflect"
 	"sync/atomic"
@@ -176,4 +177,60 @@ func TestZeroStruct(t *testing.T) {
 	t.Logf("waiting...\n")
 	<-done
 	t.Logf("end...\n")
+}
+
+func TestSingle(t *testing.T) {
+	words := []string{"Go", "Go", "Go", "Rust", "PHP", "JavaScript", "Java"}
+	results, err := coSearch(context.Background(), words)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	t.Log(results)
+}
+
+var g = new(singleflight.Group)
+
+func coSearch(ctx context.Context, words []string) ([]string, error) {
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+
+	results := make([]string, len(words))
+
+	for i, word := range words {
+		i, word := i, word
+
+		g.Go(func() error {
+			result, err := search(ctx, word)
+			if err != nil {
+				return err
+			}
+
+			results[i] = result
+			return nil
+		})
+	}
+
+	err := g.Wait()
+
+	return results, err
+}
+
+func search(ctx context.Context, word string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	result := g.DoChan(word, func() (interface{}, error) {
+		return query(ctx, word)
+	})
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case r := <-result:
+		return r.Val.(string), r.Err
+	}
+}
+
+func query(ctx context.Context, word string) (string, error) {
+	return fmt.Sprintf("result: %s", word), nil
 }
