@@ -232,5 +232,10 @@ func search(ctx context.Context, word string) (string, error) {
 }
 
 func query(ctx context.Context, word string) (string, error) {
-	return fmt.Sprintf("result: %s", word), nil
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+		return fmt.Sprintf("result: %s", word), nil
+	}
 }
