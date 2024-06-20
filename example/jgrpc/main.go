@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/sqids/sqids-go"
+	"go.uber.org/zap"
 	epb "google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,6 +26,9 @@ import (
 var header, trailer metadata.MD
 
 func main() {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync() // flushes buffer, if any
+	sugar := logger.Sugar()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	auth := BasicAuthentication{
@@ -65,7 +69,7 @@ func main() {
 	mdBase := metadata.New(map[string]string{"version": "v1"})
 	mdF := metadata.Pairs("version", "00001")
 	md := metadata.Join(mdBase, mdF)
-	log.Printf("matadata info %+v", md)
+	sugar.Infof("matadata info %+v", md)
 	ctx = metadata.NewOutgoingContext(ctx, md) //AppendToOutgoingContext
 	greet, err := client.Greet(ctx, &pb.GreetRequest{
 		Name:     "jojo",
@@ -75,7 +79,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Greet Response -> : %+v\n, header ->: %+v", greet, header)
+	sugar.Infof("Greet Response -> : %+v\n, header ->: %+v", greet, header)
 	os.Exit(-1)
 
 	stream, err := client.SearchOrders(ctx, &wrapperspb.StringValue{
