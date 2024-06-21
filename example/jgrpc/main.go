@@ -57,7 +57,7 @@ func main() {
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
-			log.Printf("%+v", err)
+			sugar.Infof("%+v", err)
 		}
 	}(conn)
 	client := pb.NewGreeterServiceClient(conn)
