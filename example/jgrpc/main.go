@@ -17,7 +17,6 @@ import (
 	"io"
 	pb "jgrpc/demo"
 	"log"
-	"os"
 	"slices"
 	"strconv"
 	"time"
@@ -80,7 +79,6 @@ func main() {
 		panic(err)
 	}
 	sugar.Infof("Greet Response -> : %+v\n, header ->: %+v", greet, header)
-	os.Exit(-1)
 
 	stream, err := client.SearchOrders(ctx, &wrapperspb.StringValue{
 		Value: "google",
