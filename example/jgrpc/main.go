@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	pb "jgrpc/demo"
-	"log"
+	"log/slog"
 	"slices"
 	"strconv"
 	"time"
@@ -91,7 +91,7 @@ func main() {
 		if err == io.EOF {
 			break
 		}
-		log.Println("Search Result: ", order)
+		slog.Info("Search Result: ", order)
 	}
 
 	streamC, err := client.UpdateOrders(ctx)
@@ -115,13 +115,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Update Orders Res : %s", res)
+	slog.Info("Update Orders Res ", res)
 
 	streamP, err := client.ProcessOrders(ctx)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
-			log.Println(err)
+			slog.Error(err.Error())
 			return
 		}
 
@@ -130,13 +130,13 @@ func main() {
 			for _, d := range st.Details() {
 				switch info := d.(type) {
 				case *epb.BadRequest_FieldViolation:
-					log.Printf("Request Field Invalid: %s", info)
+					slog.Info("Request Field Invalid:", info)
 				default:
-					log.Printf("Unexpected error type: %s", info)
+					slog.Info("Unexpected error type:", info)
 				}
 			}
 		default:
-			log.Printf("Unhandled error : %s ", st.String())
+			slog.Error(st.String())
 		}
 
 		return
@@ -145,18 +145,18 @@ func main() {
 		if err := streamP.Send(&wrapperspb.StringValue{Value: "1"}); err != nil {
 			st, ok := status.FromError(err)
 			if ok && st.Code() == codes.InvalidArgument {
-				log.Println(st.Code(), st.Message())
+				slog.Info(st.Code().String(), st.Message())
 			} else {
-				log.Println(err)
+				slog.Error(err.Error())
 			}
 		}
 
 		if err := streamP.Send(&wrapperspb.StringValue{Value: "4"}); err != nil {
 			st, ok := status.FromError(err)
 			if ok && st.Code() == codes.InvalidArgument {
-				log.Println(st.Code(), st.Message())
+				slog.Info(st.Code().String(), st.Message())
 			} else {
-				log.Println(err)
+				slog.Error(err.Error())
 			}
 		}
 
@@ -170,7 +170,7 @@ func main() {
 		if err == io.EOF {
 			break
 		}
-		log.Println("Combined shipment : ", combinedShipment)
+		slog.Info("Combined shipment : ", combinedShipment)
 	}
 
 	orders := []Order{
@@ -206,7 +206,7 @@ func orderUnaryClientInterceptor(ctx context.Context, method string, req, reply 
 	err := invoker(ctx, method, req, reply, cc, opts...)
 
 	// Post-processor phase
-	log.Printf("method: %s, req: %s, resp: %s, latency: %s\n",
+	slog.Info("method: %s, req: %s, resp: %s, latency: %s\n",
 		method, req, reply, time.Now().Sub(s))
 
 	return err
@@ -220,7 +220,7 @@ type wrappedStream struct {
 func (w *wrappedStream) RecvMsg(m interface{}) error {
 	err := w.ClientStream.RecvMsg(m)
 
-	log.Printf("method: %s, res: %s\n", w.method, m)
+	slog.Info("method: %s, res: %s\n", w.method, m)
 
 	return err
 }
@@ -228,7 +228,7 @@ func (w *wrappedStream) RecvMsg(m interface{}) error {
 func (w *wrappedStream) SendMsg(m interface{}) error {
 	err := w.ClientStream.SendMsg(m)
 
-	log.Printf("method: %s, req: %s\n", w.method, m)
+	slog.Info("method: %s, req: %s\n", w.method, m)
 
 	return err
 }
@@ -250,7 +250,7 @@ func orderStreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc,
 	cs, err := streamer(ctx, desc, cc, method, opts...)
 
 	// PostProcessing logic
-	log.Printf("method: %s, latency: %s\n", method, time.Now().Sub(s))
+	slog.Info("method: %s, latency: %s\n", method, time.Now().Sub(s))
 
 	return newWrappedStream(method, cs), err
 }
