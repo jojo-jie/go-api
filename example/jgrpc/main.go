@@ -17,6 +17,7 @@ import (
 	"io"
 	pb "jgrpc/demo"
 	"log/slog"
+	"os"
 	"slices"
 	"strconv"
 	"time"
@@ -249,8 +250,13 @@ func orderStreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc,
 
 	cs, err := streamer(ctx, desc, cc, method, opts...)
 
-	// PostProcessing logic
-	slog.Info("method: %s, latency: %s\n", method, time.Now().Sub(s))
+	// PostProcessing logic log level
+	l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource:   true,
+		Level:       slog.LevelDebug,
+		ReplaceAttr: nil,
+	}))
+	l.Debug("method info", method, time.Now().Sub(s))
 
 	return newWrappedStream(method, cs), err
 }
