@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"unsafe"
 )
 
 type MyType struct {
@@ -177,6 +178,17 @@ func TestZeroStruct(t *testing.T) {
 	t.Logf("waiting...\n")
 	<-done
 	t.Logf("end...\n")
+
+	type Empty struct{}
+
+	var s1 struct{}
+	s2 := Empty{}
+	s3 := struct{}{}
+
+	fmt.Printf("s1 addr: %p, size: %d\n", &s1, unsafe.Sizeof(s1))
+	fmt.Printf("s2 addr: %p, size: %d\n", &s2, unsafe.Sizeof(s2))
+	fmt.Printf("s3 addr: %p, size: %d\n", &s3, unsafe.Sizeof(s3))
+	fmt.Printf("s1 == s2 == s3: %t\n", s1 == s2 && s2 == s3)
 }
 
 func TestSingle(t *testing.T) {
