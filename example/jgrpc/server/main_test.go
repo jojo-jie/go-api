@@ -202,8 +202,6 @@ func TestSingle(t *testing.T) {
 	t.Log(results)
 }
 
-var g = new(singleflight.Group)
-
 func coSearch(ctx context.Context, words []string) ([]string, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
@@ -212,25 +210,24 @@ func coSearch(ctx context.Context, words []string) ([]string, error) {
 
 	for i, word := range words {
 		i, word := i, word
-
 		g.Go(func() error {
 			result, err := search(ctx, word)
 			if err != nil {
 				return err
 			}
-
 			results[i] = result
 			return nil
 		})
 	}
 
 	err := g.Wait()
-
 	return results, err
 }
 
+var g = new(singleflight.Group)
+
 func search(ctx context.Context, word string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 	result := g.DoChan(word, func() (interface{}, error) {
 		return query(ctx, word)
