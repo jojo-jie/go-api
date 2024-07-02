@@ -169,6 +169,13 @@ func doAnother(ctx context.Context, printCh <-chan int, t *testing.T) {
 	}
 }
 
+type Person struct {
+	name            string
+	age             int
+	email           int
+	favouriteColors []string
+}
+
 func TestZeroStruct(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
@@ -185,10 +192,24 @@ func TestZeroStruct(t *testing.T) {
 	s2 := Empty{}
 	s3 := struct{}{}
 
-	fmt.Printf("s1 addr: %p, size: %d\n", &s1, unsafe.Sizeof(s1))
-	fmt.Printf("s2 addr: %p, size: %d\n", &s2, unsafe.Sizeof(s2))
-	fmt.Printf("s3 addr: %p, size: %d\n", &s3, unsafe.Sizeof(s3))
-	fmt.Printf("s1 == s2 == s3: %t\n", s1 == s2 && s2 == s3)
+	t.Logf("s1 addr: %p, size: %d\n", &s1, unsafe.Sizeof(s1))
+	t.Logf("s2 addr: %p, size: %d\n", &s2, unsafe.Sizeof(s2))
+	t.Logf("s3 addr: %p, size: %d\n", &s3, unsafe.Sizeof(s3))
+	t.Logf("s1 == s2 == s3: %t\n", s1 == s2 && s2 == s3)
+
+	var p1 Person
+	p2 := Person{
+		name: "1",
+		age:  45,
+	}
+	//对于具有不可比较字段（slices, maps, functions）的结构，可以使用 reflect.DeepEqual()
+	//这个 DeepEqual() 方法实际上适用于任何结构比较，而不仅仅是检查结构体是否为空
+	t.Log(reflect.DeepEqual(p1, Person{}))
+	t.Log(reflect.DeepEqual(p2, Person{}))
+
+	t.Log(reflect.ValueOf(p1).IsZero())
+	t.Log(reflect.ValueOf(p2).IsZero())
+
 }
 
 func TestSingle(t *testing.T) {
