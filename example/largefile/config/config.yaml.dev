@@ -1,8 +1,0 @@
-# config.yaml.dev ==> config.yaml
-Minio:
-  Url:
-  AccessKey:
-  SecretKey:
-  Api:
-  Path:
-  BucketName:
