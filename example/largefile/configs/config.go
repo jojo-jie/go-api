@@ -15,7 +15,7 @@ type Config struct {
 }
 
 type MinioConfig struct {
-	Url        string `yaml:"url"`
+	Endpoint   string `yaml:"endpoint"`
 	AccessKey  string `yaml:"access_key"`
 	SecretKey  string `yaml:"secret_key"`
 	Api        string `yaml:"api"`
