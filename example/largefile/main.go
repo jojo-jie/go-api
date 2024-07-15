@@ -2,9 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"largefile/configs"
-	"largefile/internal/minio"
+	"largefile/internal/routers"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -19,20 +24,31 @@ func init() {
 }
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	client, err := minio.New(c)
-	if err != nil {
-		panic(err)
+	s := &http.Server{
+		Addr:           ":" + c.Server.Port,
+		Handler:        routers.New(c),
+		ReadTimeout:    c.Server.ReadTimeout,
+		WriteTimeout:   c.Server.WriteTimeout,
+		MaxHeaderBytes: 1 << 20,
 	}
-	buckets, err := client.ListBuckets(ctx)
-	if err != nil {
-		panic(err)
-	}
-	for _, bucket := range buckets {
-		fmt.Println(bucket.Name)
-	}
+	log.Println("listen port:", c.Server.Port)
+	go func() {
+		err := s.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("s.ListenAndServe err: %v", err)
+		}
+	}()
 
-	exists, err := client.BucketExists(ctx, c.Minio.BucketName)
-	fmt.Println(exists, err)
+	//等待中断信号
+	quit := make(chan os.Signal)
+	// 接收 syscall.SIGINT syscall.SIGTERM
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shuting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown", err)
+	}
+	log.Println("Server exiting")
 }
