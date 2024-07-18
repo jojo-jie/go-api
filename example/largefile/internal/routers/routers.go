@@ -13,6 +13,7 @@ func New(c *configs.Config) *mux.Router {
 	//routers.Use(configsCtx(c))
 	service.Init(c)
 	routers.HandleFunc("/buckets", service.Buckets).Methods(http.MethodGet)
-	routers.HandleFunc("/pre_sign_url", service.PreSignUrl).Methods(http.MethodGet)
+	routers.HandleFunc("/binary_url", service.SignUrl).Methods(http.MethodGet)
+	routers.HandleFunc("/upload", service.Upload).Methods(http.MethodPost)
 	return routers
 }

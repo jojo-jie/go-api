@@ -1,11 +1,10 @@
-package minio
+package oss
 
 import (
 	"context"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"largefile/configs"
-	"log"
 	"net/url"
 	"time"
 )
@@ -44,14 +43,12 @@ func (m *Minio) PreSignedPutObject(ctx context.Context, bucketName string, objec
 	return m.client.PresignedPutObject(ctx, bucketName, objectName, expires)
 }
 
-func (m *Minio) PreSignedPostPolicy(ctx context.Context, bucketName string, objectName string, expires time.Duration) (*url.URL, error) {
+func (m *Minio) PreSignedPostPolicy(ctx context.Context, bucketName string, objectName string, expires time.Duration) (*url.URL, map[string]string, error) {
 	policy := minio.NewPostPolicy()
 	_ = policy.SetBucket(bucketName)
 	_ = policy.SetKey(objectName)
 	_ = policy.SetExpires(time.Now().Add(expires))
-	presignedPostPolicyURL, fordata, err := m.client.PresignedPostPolicy(ctx, policy)
-	log.Println(fordata)
-	return presignedPostPolicyURL, err
+	return m.client.PresignedPostPolicy(ctx, policy)
 }
 
 func (m *Minio) GetPolicyUrl(ctx context.Context, bucketName string, objectName string, expires time.Duration, req url.Values) (*url.URL, error) {

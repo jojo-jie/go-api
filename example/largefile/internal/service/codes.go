@@ -1,6 +1,10 @@
 package service
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+)
 
 type Response struct {
 	Code int    `json:"code"`
@@ -8,20 +12,27 @@ type Response struct {
 	Data any    `json:"data"`
 }
 
-func Success(msg string, data any) []byte {
+func Success(w http.ResponseWriter, msg string, data any) {
 	respByte, _ := json.Marshal(Response{
 		Code: 0,
 		Msg:  msg,
 		Data: data,
 	})
-	return respByte
+	setHeader(w)
+	w.Write(respByte)
 }
 
-func Error(msg string, data any) []byte {
+func Error(w http.ResponseWriter, msg string, data any) {
 	respByte, _ := json.Marshal(Response{
 		Code: -1,
 		Msg:  msg,
 		Data: data,
 	})
-	return respByte
+	setHeader(w)
+	w.Write(respByte)
+}
+
+func setHeader(w http.ResponseWriter) {
+	w.Header().Set("Date", time.Now().UTC().Format(http.TimeFormat))
+	w.Header().Set("Content-Type", "application/json")
 }
