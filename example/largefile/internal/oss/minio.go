@@ -10,11 +10,11 @@ import (
 )
 
 type Minio struct {
-	client *minio.Client
+	client *minio.Core
 }
 
 func New(c *configs.Config) (*Minio, error) {
-	minioClient, err := minio.New(c.Minio.Endpoint, &minio.Options{
+	minioClient, err := minio.NewCore(c.Minio.Endpoint, &minio.Options{
 		Creds: credentials.NewStaticV4(c.Minio.AccessKey, c.Minio.SecretKey, ""),
 	})
 	if err != nil {
@@ -39,6 +39,10 @@ func (m *Minio) RemoveBucket(ctx context.Context, bucketName string) error {
 	return m.client.RemoveBucket(ctx, bucketName)
 }
 
+func (m *Minio) RemoveObject(ctx context.Context, bucketName string, objectName string, removeObjectOptions minio.RemoveObjectOptions) error {
+	return m.client.RemoveObject(ctx, bucketName, objectName, removeObjectOptions)
+}
+
 func (m *Minio) PreSignedPutObject(ctx context.Context, bucketName string, objectName string, expires time.Duration) (*url.URL, error) {
 	return m.client.PresignedPutObject(ctx, bucketName, objectName, expires)
 }
@@ -53,4 +57,8 @@ func (m *Minio) PreSignedPostPolicy(ctx context.Context, bucketName string, obje
 
 func (m *Minio) GetPolicyUrl(ctx context.Context, bucketName string, objectName string, expires time.Duration, req url.Values) (*url.URL, error) {
 	return m.client.PresignedGetObject(ctx, bucketName, objectName, expires, req)
+}
+
+func (m *Minio) NewMultipartUpload(ctx context.Context, bucketName string, objectName string, opts minio.PutObjectOptions) (string, error) {
+	return m.client.NewMultipartUpload(ctx, bucketName, objectName, opts)
 }

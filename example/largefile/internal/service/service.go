@@ -7,6 +7,7 @@ import (
 	"io"
 	"largefile/configs"
 	"largefile/internal/oss"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"sync"
@@ -29,7 +30,7 @@ func Buckets(writer http.ResponseWriter, request *http.Request) {
 	Success(writer, "ok", buckets)
 }
 
-func SignUrl(writer http.ResponseWriter, request *http.Request) {
+func BinaryUrl(writer http.ResponseWriter, request *http.Request) {
 	objectName, ok := request.URL.Query()["file_name"]
 	if !ok {
 		Error(writer, "file_name 非法", nil)
@@ -46,6 +47,22 @@ func SignUrl(writer http.ResponseWriter, request *http.Request) {
 		"file_url":   imagesUrl.String(),
 	}
 	Success(writer, "ok", urlMap)
+	return
+}
+
+func RemoveObject(writer http.ResponseWriter, request *http.Request) {
+	objectName, ok := request.URL.Query()["file_name"]
+	if !ok {
+		Error(writer, "file_name 非法", nil)
+		return
+	}
+	opts := minio.RemoveObjectOptions{}
+	err := m.RemoveObject(request.Context(), c.Minio.BucketName, objectName[0], opts)
+	if err != nil {
+		Error(writer, err.Error(), nil)
+		return
+	}
+	Success(writer, "ok", nil)
 	return
 }
 
@@ -105,5 +122,34 @@ func Upload(writer http.ResponseWriter, request *http.Request) {
 		Error(writer, errors.New(res.Status).Error(), fileInfo)
 		return
 	}
-	Success(writer, "success", fileInfo)
+	imagesUrl, err := m.GetPolicyUrl(request.Context(), c.Minio.BucketName, header.Filename, time.Hour, nil)
+	if err != nil {
+		Error(writer, err.Error(), nil)
+		return
+	}
+	log.Printf("upload fileInfo %+v\n", fileInfo)
+	Success(writer, "success", map[string]string{
+		"file_url": imagesUrl.String(),
+	})
+}
+
+func ChunkUpload(writer http.ResponseWriter, request *http.Request) {
+	file, header, err := request.FormFile("file")
+	if err != nil {
+		Error(writer, err.Error(), nil)
+		return
+	}
+	defer file.Close()
+	log.Println("check file info", header.Size)
+	opts := minio.PutObjectOptions{}
+	uploadID, err := m.NewMultipartUpload(request.Context(), c.Minio.BucketName, header.Filename, opts)
+	if err != nil {
+		Error(writer, err.Error(), nil)
+		return
+	}
+
+	Success(writer, "ok", map[string]any{
+		"upload_id": uploadID,
+		"size":      header.Size,
+	})
 }
