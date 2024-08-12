@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 )
 
 type Response struct {
@@ -18,7 +17,6 @@ func Success(w http.ResponseWriter, msg string, data any) {
 		Msg:  msg,
 		Data: data,
 	})
-	setHeader(w)
 	w.Write(respByte)
 }
 
@@ -28,11 +26,5 @@ func Error(w http.ResponseWriter, msg string, data any) {
 		Msg:  msg,
 		Data: data,
 	})
-	setHeader(w)
 	w.Write(respByte)
-}
-
-func setHeader(w http.ResponseWriter) {
-	w.Header().Set("Date", time.Now().UTC().Format(http.TimeFormat))
-	w.Header().Set("Content-Type", "application/json")
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"io"
 	"largefile/configs"
 	"net/url"
 	"time"
@@ -55,10 +56,31 @@ func (m *Minio) PreSignedPostPolicy(ctx context.Context, bucketName string, obje
 	return m.client.PresignedPostPolicy(ctx, policy)
 }
 
+func (m *Minio) StatObject(ctx context.Context, bucketName string, objectName string, opts minio.StatObjectOptions) (minio.ObjectInfo, error) {
+	return m.client.StatObject(ctx, bucketName, objectName, opts)
+}
+
+func (m *Minio) ListObjects(bucket, prefix, marker, delimiter string, maxKeys int) (minio.ListBucketResult, error) {
+	return m.client.ListObjects(bucket, prefix, marker, delimiter, maxKeys)
+}
+
 func (m *Minio) GetPolicyUrl(ctx context.Context, bucketName string, objectName string, expires time.Duration, req url.Values) (*url.URL, error) {
 	return m.client.PresignedGetObject(ctx, bucketName, objectName, expires, req)
 }
 
 func (m *Minio) NewMultipartUpload(ctx context.Context, bucketName string, objectName string, opts minio.PutObjectOptions) (string, error) {
 	return m.client.NewMultipartUpload(ctx, bucketName, objectName, opts)
+}
+
+func (m *Minio) ListMultipartUploads(ctx context.Context, bucket, prefix, keyMarker, uploadIDMarker, delimiter string, maxUploads int) (result minio.ListMultipartUploadsResult, err error) {
+	return m.client.ListMultipartUploads(ctx, bucket, prefix, keyMarker, uploadIDMarker, delimiter, maxUploads)
+}
+
+func (m *Minio) PutObjectPart(ctx context.Context, bucket, object, uploadID string, partID int,
+	data io.Reader, size int64, opts minio.PutObjectPartOptions) (minio.ObjectPart, error) {
+	return m.client.PutObjectPart(ctx, bucket, object, uploadID, partID, data, size, opts)
+}
+
+func (m *Minio) CompleteMultipartUploadFinish(ctx context.Context, bucket, object, uploadID string, parts []minio.CompletePart, opts minio.PutObjectOptions) (minio.UploadInfo, error) {
+	return m.client.CompleteMultipartUpload(ctx, bucket, object, uploadID, parts, opts)
 }

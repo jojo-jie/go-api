@@ -2,14 +2,20 @@ package service
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"io"
 	"largefile/configs"
 	"largefile/internal/oss"
-	"log"
 	"mime/multipart"
 	"net/http"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -48,6 +54,30 @@ func BinaryUrl(writer http.ResponseWriter, request *http.Request) {
 	}
 	Success(writer, "ok", urlMap)
 	return
+}
+
+func uploadedList(fileHash string) ([]string, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	keyMarker, uploadIDMarker := "", ""
+	uploadedList := make([]string, 0, 5)
+	for {
+		uploads, err := m.ListMultipartUploads(ctx, c.Minio.BucketName, fileHash, keyMarker, uploadIDMarker, "", 1000)
+		if err != nil {
+			return nil, err
+		}
+		for _, object := range uploads.Uploads {
+			uploadedList = append(uploadedList, object.Key)
+		}
+
+		if uploads.IsTruncated {
+			keyMarker = uploads.NextKeyMarker
+			uploadIDMarker = uploads.NextUploadIDMarker
+		} else {
+			break
+		}
+	}
+	return uploadedList, nil
 }
 
 func RemoveObject(writer http.ResponseWriter, request *http.Request) {
@@ -127,29 +157,133 @@ func Upload(writer http.ResponseWriter, request *http.Request) {
 		Error(writer, err.Error(), nil)
 		return
 	}
-	log.Printf("upload fileInfo %+v\n", fileInfo)
 	Success(writer, "success", map[string]string{
 		"file_url": imagesUrl.String(),
 	})
 }
 
+func Verify(writer http.ResponseWriter, request *http.Request) {
+	var body map[string]any
+	err := json.NewDecoder(request.Body).Decode(&body)
+	if err != nil {
+		Error(writer, "参数非法", nil)
+		return
+	}
+	fileName, ok1 := body["fileName"].(string)
+	fileHash, ok2 := body["fileHash"].(string)
+	if !ok1 || !ok2 {
+		Error(writer, "参数非法", nil)
+		return
+	}
+	ext := filepath.Ext(fileName)
+	s := strings.Builder{}
+	s.WriteString(fileHash)
+	s.WriteString(ext)
+	opts := minio.StatObjectOptions{}
+	_, err = m.StatObject(request.Context(), c.Minio.BucketName, s.String(), opts)
+	uploadID := ""
+	uploadedList := make([]any, 0)
+	if err != nil {
+		opts := minio.PutObjectOptions{}
+		uploadID, err = m.NewMultipartUpload(request.Context(), c.Minio.BucketName, s.String(), opts)
+		if err != nil {
+			Error(writer, err.Error(), nil)
+			return
+		}
+		Success(writer, "需要上传文件", map[string]any{
+			"shouldUpload": true,
+			"uploadedList": uploadedList,
+			"uploadID":     uploadID,
+		})
+		return
+	}
+	Success(writer, "文件已存在", map[string]any{
+		"shouldUpload": false,
+		"uploadedList": uploadedList,
+		"uploadID":     uploadID,
+	})
+	return
+}
+
 func ChunkUpload(writer http.ResponseWriter, request *http.Request) {
-	file, header, err := request.FormFile("file")
+	file, header, err := request.FormFile("chunk")
 	if err != nil {
 		Error(writer, err.Error(), nil)
 		return
 	}
 	defer file.Close()
-	log.Println("check file info", header.Size)
-	opts := minio.PutObjectOptions{}
-	uploadID, err := m.NewMultipartUpload(request.Context(), c.Minio.BucketName, header.Filename, opts)
+	uploadID := request.PostForm.Get("uploadID")
+	chunkHash := request.FormValue("chunkHash")
+	fileHash := request.FormValue("fileHash")
+	fileName := request.FormValue("fileName")
+	partID, _ := strconv.Atoi(request.FormValue("partID"))
+	if uploadID == "" || chunkHash == "" || fileHash == "" || fileName == "" {
+		Error(writer, "缺少参数", nil)
+		return
+	}
+	ext := filepath.Ext(fileName)
+	s := strings.Builder{}
+	s.WriteString(fileHash)
+	s.WriteString(ext)
+	objectPart, err := m.PutObjectPart(request.Context(), c.Minio.BucketName, s.String(), uploadID, partID, file, header.Size, minio.PutObjectPartOptions{
+		Md5Base64:    "",
+		Sha256Hex:    "",
+		SSE:          encrypt.NewSSE(),
+		CustomHeader: nil,
+		Trailer:      nil,
+	})
 	if err != nil {
 		Error(writer, err.Error(), nil)
 		return
 	}
 
 	Success(writer, "ok", map[string]any{
-		"upload_id": uploadID,
-		"size":      header.Size,
+		"uploadID": uploadID,
+		"part": minio.CompletePart{
+			PartNumber: partID,
+			ETag:       objectPart.ETag,
+		},
 	})
+}
+
+type UploadRequest struct {
+	Parts    []minio.CompletePart `json:"parts"`
+	UploadID string               `json:"uploadID"`
+	FileHash string               `json:"fileHash"`
+	FileName string               `json:"fileName"`
+}
+
+func Merge(writer http.ResponseWriter, request *http.Request) {
+	var body UploadRequest
+	err := json.NewDecoder(request.Body).Decode(&body)
+	if err != nil {
+		Error(writer, "参数非法", nil)
+		return
+	}
+	if body.UploadID == "" || body.FileHash == "" || body.FileName == "" {
+		Error(writer, "缺少参数", nil)
+		return
+	}
+	sort.Slice(body.Parts, func(i, j int) bool {
+		return body.Parts[i].PartNumber < body.Parts[j].PartNumber
+	})
+	ext := filepath.Ext(body.FileName)
+	s := strings.Builder{}
+	s.WriteString(body.FileHash)
+	s.WriteString(ext)
+	objectContentType := "binary/octet-stream"
+	metadata := make(map[string]string)
+	metadata["Content-Type"] = objectContentType
+	putopts := minio.PutObjectOptions{
+		UserMetadata: metadata,
+	}
+	uploadInfo, err := m.CompleteMultipartUploadFinish(context.Background(), c.Minio.BucketName, s.String(), body.UploadID, body.Parts, putopts)
+	if err != nil {
+		Error(writer, err.Error(), nil)
+		return
+	}
+	Success(writer, "ok", map[string]any{
+		"uploadInfo": uploadInfo,
+	})
+	return
 }
