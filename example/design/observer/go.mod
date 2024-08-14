@@ -1,3 +1,3 @@
 module observer
 
-go 1.21
+go 1.23

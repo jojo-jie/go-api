@@ -1,6 +1,6 @@
 module gochromedp
 
-go 1.21
+go 1.23
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20220624030920-1958475a8671

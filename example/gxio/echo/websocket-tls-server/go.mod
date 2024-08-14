@@ -1,6 +1,6 @@
 module websocket-tls-server
 
-go 1.21
+go 1.23
 
 require github.com/lesismal/nbio v1.3.10
 

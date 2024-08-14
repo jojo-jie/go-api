@@ -1,6 +1,6 @@
 module dayday
 
-go 1.21
+go 1.23
 
 require (
 	github.com/bluele/gcache v0.0.2

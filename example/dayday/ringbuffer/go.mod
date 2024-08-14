@@ -1,6 +1,6 @@
 module ringbuffer
 
-go 1.21
+go 1.23
 
 require github.com/stretchr/testify v1.7.4
 

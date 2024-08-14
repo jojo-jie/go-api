@@ -1,6 +1,6 @@
 module echo
 
-go 1.21
+go 1.23
 
 require (
 	github.com/labstack/echo v3.3.10+incompatible
