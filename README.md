@@ -1,7 +1,7 @@
 
 ## 目的
 
-本项目采用了一系列Golang中比较流行的组件，可以以本项目为基础快速搭建Restful Web API
+本项目采用了一系列Golang中比较流行的组件快速搭建Restful Web API
 
 ## 特色
 
