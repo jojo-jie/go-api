@@ -7,3 +7,4 @@ logs/
 tmp/
 docs/
 *.http
+.DS_Store
