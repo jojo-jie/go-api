@@ -61,7 +61,8 @@ func main() {
 	data := map[string]string{
 		"Name1": "go",
 		"Name2": "programming",
-		"Name3": "tour"}
+		"Name3": "tour",
+	}
 	_ = tpl.Execute(os.Stdout, data)
 }
 
