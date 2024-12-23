@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"text/template"
 )
 
@@ -55,7 +54,7 @@ func main() {
 	flag.Parse()
 	log.Println(r)*/
 
-	funcMap := template.FuncMap{"title": strings.Title}
+	funcMap := template.FuncMap{"title": ""}
 	tpl := template.New("go-programming-tour")
 	tpl, _ = tpl.Funcs(funcMap).Parse(templateText)
 	data := map[string]string{
