@@ -2,8 +2,11 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
+	"sync"
 	"testing"
+	"time"
 )
 
 // 定义结构体
@@ -58,4 +61,44 @@ func TestSortD(t *testing.T) {
 	for i := range 10 {
 		t.Log(i)
 	}
+}
+
+var resource int32 = 0
+
+func Read(rwm *sync.RWMutex, wg *sync.WaitGroup) {
+
+	rwm.RLock()
+	defer rwm.RUnlock()
+	fmt.Println("read lock acquired")
+
+	time.Sleep(time.Second * 3)
+
+	fmt.Println("read lock released")
+	wg.Done()
+}
+
+func Write(rwm *sync.RWMutex, wg *sync.WaitGroup) {
+
+	rwm.Lock()
+	defer rwm.Unlock()
+	fmt.Println("write lock acquired")
+
+	resource = resource + 1
+	time.Sleep(time.Second * 3)
+
+	fmt.Println("write lock released")
+	wg.Done()
+
+}
+
+func TestRWM(t *testing.T) {
+	rwm := &sync.RWMutex{}
+	wg := &sync.WaitGroup{}
+
+	for i := 0; i < 5; i++ {
+		wg.Add(2)
+		go Write(rwm, wg)
+		go Read(rwm, wg)
+	}
+	wg.Wait()
 }
