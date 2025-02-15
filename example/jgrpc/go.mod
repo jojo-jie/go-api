@@ -1,6 +1,6 @@
 module jgrpc
 
-go 1.23
+go 1.24
 
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1

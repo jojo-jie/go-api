@@ -1,6 +1,6 @@
 module msg
 
-go 1.23
+go 1.24
 
 require github.com/Shopify/sarama v1.37.2
 

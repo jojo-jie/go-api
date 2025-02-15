@@ -1,6 +1,6 @@
 module tag-service
 
-go 1.23
+go 1.24
 
 require (
 	github.com/golang/protobuf v1.5.3
