@@ -30,7 +30,7 @@ func TestTimeA(tt *testing.T) {
 		case i := <-ch:
 			tt.Logf("done:%d", i)
 		case <-time.After(3 * time.Minute):
-			tt.Logf("现在是：%d，我脑子进煎鱼了！", time.Now().Unix())
+			tt.Logf("现在是：%d", time.Now().Unix())
 		}
 	}
 }
