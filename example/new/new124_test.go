@@ -1,6 +1,7 @@
 package new
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -9,10 +10,9 @@ func TestNew124(tt *testing.T) {
 	timeout := 50 * time.Millisecond
 	t := time.NewTimer(timeout)
 	time.Sleep(100 * time.Millisecond)
-	start := time.Now()
+	defer TrackTime(time.Now())
 	t.Reset(timeout)
 	<-t.C
-	tt.Logf("range：%dms\n", time.Since(start).Milliseconds())
 }
 
 func TestTimeA(tt *testing.T) {
@@ -33,4 +33,10 @@ func TestTimeA(tt *testing.T) {
 			tt.Logf("现在是：%d", time.Now().Unix())
 		}
 	}
+}
+
+func TrackTime(pre time.Time) time.Duration {
+	elapsed := time.Since(pre)
+	fmt.Println("elapsed:", elapsed)
+	return elapsed
 }
