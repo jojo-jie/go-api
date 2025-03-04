@@ -9,10 +9,14 @@ import (
 func TestNew124(tt *testing.T) {
 	timeout := 50 * time.Millisecond
 	t := time.NewTimer(timeout)
-	time.Sleep(100 * time.Millisecond)
-	defer TrackTime(time.Now())
+	//time.Sleep(100 * time.Millisecond)
+	//defer TrackTime()()
+	fmt.Println("1111")
+	defer TrackTime2(time.Now())
+	fmt.Println("3333")
 	t.Reset(timeout)
 	<-t.C
+	fmt.Println("4444")
 }
 
 func TestTimeA(tt *testing.T) {
@@ -35,7 +39,15 @@ func TestTimeA(tt *testing.T) {
 	}
 }
 
-func TrackTime(pre time.Time) time.Duration {
+func TrackTime() func() {
+	pre := time.Now()
+	return func() {
+		elapsed := time.Since(pre)
+		fmt.Println("elapsed:", elapsed)
+	}
+}
+
+func TrackTime2(pre time.Time) time.Duration {
 	elapsed := time.Since(pre)
 	fmt.Println("elapsed:", elapsed)
 	return elapsed
