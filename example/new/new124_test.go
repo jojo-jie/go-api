@@ -12,7 +12,6 @@ var (
 	err2 = errors.New("Error 2nd")
 )
 
-func TestNew124(tt *testing.T) 
 func TestNew124(tt *testing.T) {
 	timeout := 50 * time.Millisecond
 	t := time.NewTimer(timeout)
@@ -21,7 +20,6 @@ func TestNew124(tt *testing.T) {
 	t.Reset(timeout)
 	<-t.C
 	err := errors.Join(err1, err2)
-	err:=errors.Join(err1, err2)
 	tt.Log(errors.Is(err, err1))
 	tt.Log(errors.Is(err, err2))
 }
