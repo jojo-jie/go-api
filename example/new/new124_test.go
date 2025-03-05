@@ -1,22 +1,29 @@
 package new
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 )
 
+var (
+	err1 = errors.New("Error 1st")
+	err2 = errors.New("Error 2nd")
+)
+
+func TestNew124(tt *testing.T) 
 func TestNew124(tt *testing.T) {
 	timeout := 50 * time.Millisecond
 	t := time.NewTimer(timeout)
-	//time.Sleep(100 * time.Millisecond)
-	//defer TrackTime()()
-	fmt.Println("1111")
-	defer TrackTime2(time.Now())
-	fmt.Println("3333")
+	defer TrackTime()()
+	time.Sleep(100 * time.Millisecond)
 	t.Reset(timeout)
 	<-t.C
-	fmt.Println("4444")
+	err := errors.Join(err1, err2)
+	err:=errors.Join(err1, err2)
+	tt.Log(errors.Is(err, err1))
+	tt.Log(errors.Is(err, err2))
 }
 
 func TestTimeA(tt *testing.T) {
