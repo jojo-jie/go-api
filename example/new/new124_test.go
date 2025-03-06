@@ -22,6 +22,10 @@ func TestNew124(tt *testing.T) {
 	err := errors.Join(err1, err2)
 	tt.Log(errors.Is(err, err1))
 	tt.Log(errors.Is(err, err2))
+
+	a := []int{1, 2, 3}
+	b := [3]int(a[0:3])
+	tt.Log(b)
 }
 
 func TestTimeA(tt *testing.T) {
