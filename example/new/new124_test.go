@@ -3,9 +3,12 @@ package new
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 )
+
+// https://mp.weixin.qq.com/s/GG3QbKQz3wYKFPdmJjWtuA
 
 var (
 	err1 = errors.New("Error 1st")
@@ -60,4 +63,18 @@ func TrackTime2(pre time.Time) time.Duration {
 	elapsed := time.Since(pre)
 	fmt.Println("elapsed:", elapsed)
 	return elapsed
+}
+
+func Ter[T any](cond bool, a, b T) T {
+	if cond {
+		return a
+	}
+	return b
+}
+
+func IsNil(x any) bool {
+	if x == nil {
+		return true
+	}
+	return reflect.ValueOf(x).IsNil()
 }
