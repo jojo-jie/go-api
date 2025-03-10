@@ -78,3 +78,59 @@ func IsNil(x any) bool {
 	}
 	return reflect.ValueOf(x).IsNil()
 }
+
+func TestChain(t *testing.T) {
+	s := New()
+
+	res, err := s.HelloWorld("jojo")
+	fmt.Println(res, err) // Hello World from 煎鱼
+
+	res, err = s.HelloWorld("edd")
+	fmt.Println(res, err) // name length must be greater than 3
+}
+
+type Service interface {
+	HelloWorld(name string) (string, error)
+}
+
+type service struct{}
+
+func (s service) HelloWorld(name string) (string, error) {
+	return fmt.Sprintf("Hello World from %s", name), nil
+}
+
+type validator struct {
+	next Service
+}
+
+func (v validator) HelloWorld(name string) (string, error) {
+	if len(name) <= 3 {
+		return "", fmt.Errorf("name length must be greater than 3")
+	}
+
+	return v.next.HelloWorld(name)
+}
+
+type logger struct {
+	next Service
+}
+
+func (l logger) HelloWorld(name string) (string, error) {
+	res, err := l.next.HelloWorld(name)
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return res, err
+	}
+
+	fmt.Println("HelloWorld method executed successfuly")
+	return res, err
+}
+
+func New() Service {
+	return logger{
+		next: validator{
+			next: service{},
+		},
+	}
+}
