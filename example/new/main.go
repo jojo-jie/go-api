@@ -2,12 +2,34 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"golang.org/x/sync/singleflight"
 	"log"
 	"net/http"
 	"time"
 )
 
-var cost float64
+var (
+	cost  float64
+	group *singleflight.Group
+)
+
+//When to Use (and When Not to Use)
+//何时使用（以及何时不使用）
+//Use:   使用：
+//For read operations (queries to APIs or databases).
+//对于读取操作（对 API 或数据库的查询）。
+//When the resource is idempotent (does not change the system state).
+//当资源幂等（不会改变系统状态）。
+//Do not use:   不要使用：
+//For write operations (creation, update, deletion).
+//对于写操作（创建、更新、删除）。
+//When the result may vary between calls.
+//当结果可能在调用之间变化时。
+
+func init() {
+	group = new(singleflight.Group)
+}
 
 func main() {
 	mux := http.NewServeMux()
@@ -39,7 +61,9 @@ func fetchProductPrice(productID string) (float64, error) {
 func getProductPriceHandler(w http.ResponseWriter, r *http.Request) {
 	productID := r.URL.Query().Get("id")
 
-	price, err := fetchProductPrice(productID)
+	price, err, _ := group.Do(productID, func() (interface{}, error) {
+		return fetchProductPrice(productID)
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -57,9 +81,16 @@ func getProductPriceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCost(w http.ResponseWriter, r *http.Request) {
-
+	response := map[string]interface{}{
+		"total_cost": fmt.Sprintf("%.2f", cost),
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func clearCosts(w http.ResponseWriter, r *http.Request) {
-
+	cost = 0
 }
