@@ -3,15 +3,19 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 	"log"
 	"net/http"
+	"path/filepath"
+	"text/template"
 	"time"
 )
 
 var (
-	cost  float64
-	group *singleflight.Group
+	cost      float64
+	group     *singleflight.Group
+	templates *template.Template
 )
 
 //When to Use (and When Not to Use)
@@ -29,24 +33,53 @@ var (
 
 func init() {
 	group = new(singleflight.Group)
+	templatePath := filepath.Join("templates", "index.html")
+	var err error
+	templates, err = template.ParseFiles(templatePath)
+	if err != nil {
+		panic(err)
+	}
+}
+
+type SseHandler struct {
+	clients map[chan string]struct{}
+}
+
+func NewSseHandler() *SseHandler {
+	return &SseHandler{
+		clients: make(map[chan string]struct{}),
+	}
 }
 
 func main() {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		templates.Execute(w, nil)
+	})
 	mux.HandleFunc("/products/{id}/price", getProductPriceHandler)
 	mux.HandleFunc("/costs", getCost)
 	mux.HandleFunc("/clear-costs", clearCosts)
-	s := &http.Server{
-		Addr:           ":8080",
-		Handler:        mux,
-		ReadTimeout:    5 * time.Second,
-		WriteTimeout:   5 * time.Second,
-		MaxHeaderBytes: 1 << 20,
-	}
+	sseHandler := NewSseHandler()
+	mux.HandleFunc("/sse", sseHandler.Serve)
+	g := new(errgroup.Group)
+	g.Go(func() error {
+		s := &http.Server{
+			Addr:           ":8080",
+			Handler:        mux,
+			ReadTimeout:    5 * time.Second,
+			WriteTimeout:   5 * time.Second,
+			MaxHeaderBytes: 1 << 20,
+		}
+		defer s.Close()
+		log.Println("API running without singleflight on port :8080...")
+		return s.ListenAndServe()
+	})
 
-	log.Println("API running without singleflight on port :8080...")
-	err := s.ListenAndServe()
-	if err != nil {
+	g.Go(func() error {
+		return sseHandler.SimulateEvents()
+	})
+
+	if err := g.Wait(); err != nil {
 		log.Fatalf("Could not start server: %s\n", err.Error())
 	}
 }
@@ -93,4 +126,47 @@ func getCost(w http.ResponseWriter, r *http.Request) {
 
 func clearCosts(w http.ResponseWriter, r *http.Request) {
 	cost = 0
+}
+
+func (h *SseHandler) Serve(w http.ResponseWriter, r *http.Request) {
+	// 设置 SSE 必需的 HTTP 头
+	w.Header().Add("Content-Type", "text/event-stream")
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Connection", "keep-alive")
+	clientChan := make(chan string)
+	h.clients[clientChan] = struct{}{}
+
+	defer func() {
+		delete(h.clients, clientChan)
+		close(clientChan)
+	}()
+
+	for {
+		select {
+		case msg := <-clientChan:
+			//使用SSE格式，data: 后接消息内容，结尾需两个换行符（\n\n），以标志消息结束。客户端（如浏览器的EventSource）会解析此格式，触发消息事件。
+			fmt.Fprintf(w, "data: %s\n\n", msg)
+			//调用 Flush() 确保数据即时发送，而非等待缓冲区满或请求结束。这对实时性要求高的场景（如SSE）至关重要。
+			w.(http.Flusher).Flush()
+		case <-r.Context().Done():
+
+			return
+		}
+	}
+}
+
+func (h *SseHandler) SimulateEvents() error {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for range ticker.C {
+		message := fmt.Sprintf("Server time: %s Total Cost: %s", time.Now().Format(time.RFC3339), fmt.Sprintf("%.2f", cost))
+		for clientChan := range h.clients {
+			select {
+			case clientChan <- message:
+			default:
+				// 跳过阻塞的 channel
+			}
+		}
+	}
+	return nil
 }

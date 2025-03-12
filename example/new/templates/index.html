@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSE 示例</title>
+</head>
+<body>
+<h1>Server-Sent Events 演示</h1>
+<div id="events"></div>
+
+<script>
+    const eventList = document.getElementById('events');
+    // 连接到同一服务器的 SSE 端点
+    const source = new EventSource('/sse');
+
+    source.onmessage = function(event) {
+        eventList.textContent = event.data;
+    };
+
+    source.onerror = function() {
+        console.log("发生错误");
+    };
+</script>
+</body>
+</html>
