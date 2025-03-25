@@ -25,12 +25,12 @@ func New() server.ServerTool {
 func currentTimeHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	timezone, ok := request.Params.Arguments["timezone"].(string)
 	if !ok {
-		return mcp.NewToolResultError("timezone must be a string"), nil
+		return mcp.NewToolResultText("timezone must be a string"), nil
 	}
 
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("parse timezone with error: %v", err)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("parse timezone with error: %v", err)), nil
 	}
 	return mcp.NewToolResultText(fmt.Sprintf(`current time is %s`, time.Now().In(loc))), nil
 }
