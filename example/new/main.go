@@ -71,7 +71,7 @@ func main() {
 			MaxHeaderBytes: 1 << 20,
 		}
 		defer s.Close()
-		log.Println("API running without singleflight on port :8080...")
+		log.Println("API running without single flight on port :8080...")
 		return s.ListenAndServe()
 	})
 
