@@ -54,7 +54,10 @@ func NewSseHandler() *SseHandler {
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		templates.Execute(w, nil)
+		err := templates.Execute(w, nil)
+		if err != nil {
+			return
+		}
 	})
 	mux.HandleFunc("/products/{id}/price", getProductPriceHandler)
 	mux.HandleFunc("/costs", getCost)
@@ -70,7 +73,12 @@ func main() {
 			WriteTimeout:   5 * time.Second,
 			MaxHeaderBytes: 1 << 20,
 		}
-		defer s.Close()
+		defer func(s *http.Server) {
+			err := s.Close()
+			if err != nil {
+				log.Println(err)
+			}
+		}(s)
 		log.Println("API running without single flight on port :8080...")
 		return s.ListenAndServe()
 	})
@@ -145,7 +153,11 @@ func (h *SseHandler) Serve(w http.ResponseWriter, r *http.Request) {
 		select {
 		case msg := <-clientChan:
 			//使用SSE格式，data: 后接消息内容，结尾需两个换行符（\n\n），以标志消息结束。客户端（如浏览器的EventSource）会解析此格式，触发消息事件。
-			fmt.Fprintf(w, "data: %s\n\n", msg)
+			_, err := fmt.Fprintf(w, "data: %s\n\n", msg)
+			if err != nil {
+				log.Printf("Error writing data: %s\n", err.Error())
+				return
+			}
 			//调用 Flush() 确保数据即时发送，而非等待缓冲区满或请求结束。这对实时性要求高的场景（如SSE）至关重要。
 			w.(http.Flusher).Flush()
 		case <-r.Context().Done():
