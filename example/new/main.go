@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
+	"sync"
 	"text/template"
 	"time"
 )
@@ -16,6 +18,7 @@ var (
 	cost      float64
 	group     *singleflight.Group
 	templates *template.Template
+	wg        *sync.WaitGroup
 )
 
 //When to Use (and When Not to Use)
@@ -39,6 +42,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	wg = new(sync.WaitGroup)
 }
 
 type SseHandler struct {
@@ -181,4 +185,47 @@ func (h *SseHandler) SimulateEvents() error {
 		}
 	}
 	return nil
+}
+
+func (h *SseHandler) Factorial(w http.ResponseWriter, r *http.Request) {
+	nStr := r.URL.Query().Get("n")
+	n, err := strconv.Atoi(nStr)
+	if err != nil {
+		http.Error(w, "Invalid number", http.StatusBadRequest)
+		return
+	}
+
+	// Increment WaitGroup for each request
+	wg.Add(1)
+	go func(num int) {
+		defer wg.Done()
+		result := factorial(num)
+		message := fmt.Sprintf("Server time: %s Factorial: %d", time.Now().Format(time.RFC3339), result)
+		response := map[string]interface{}{
+			"factorial": message,
+		}
+		Ret(w, response)
+		for clientChan := range h.clients {
+			select {
+			case clientChan <- message:
+			default:
+				// 跳过阻塞的 channel
+			}
+		}
+	}(n)
+}
+
+func factorial(n int) int {
+	if n <= 1 {
+		return 1
+	}
+	return n * factorial(n-1)
+}
+
+func Ret(w http.ResponseWriter, response any) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
