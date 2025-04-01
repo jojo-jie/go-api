@@ -67,6 +67,7 @@ func main() {
 	mux.HandleFunc("/costs", getCost)
 	mux.HandleFunc("/clear-costs", clearCosts)
 	sseHandler := NewSseHandler()
+	mux.HandleFunc("/factorial", sseHandler.Factorial)
 	mux.HandleFunc("/sse", sseHandler.Serve)
 	g := new(errgroup.Group)
 	g.Go(func() error {
@@ -118,11 +119,8 @@ func getProductPriceHandler(w http.ResponseWriter, r *http.Request) {
 		"product_id": productID,
 		"price":      price,
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+
+	Ret(w, response)
 }
 
 func getCost(w http.ResponseWriter, r *http.Request) {
