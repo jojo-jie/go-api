@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
@@ -171,4 +173,29 @@ func worker(id int, tasks <-chan int, results chan<- int, wg *sync.WaitGroup) {
 		// Do some work, e.g., multiply by 2
 		results <- t * 2
 	}
+}
+
+func TestZero(t *testing.T) {
+	r := bytes.NewReader([]byte("Hello, 世界"))
+	r.WriteTo(&zeroCopyWriter{})
+}
+
+type zeroCopyWriter struct{}
+
+func (w *zeroCopyWriter) Write(b []byte) (int, error) {
+	fmt.Printf("%v", b)
+	return len(b), nil
+}
+
+func TestReadCache(t *testing.T) {
+	b := []byte("Hello, 世界")
+	r := bufio.NewReader(bytes.NewReader(b))
+	numBytesToRead := r.Buffered()
+	t.Log(numBytesToRead)
+	if numBytesToRead < 5 {
+		numBytesToRead = 5
+	}
+	p, _ := r.Peek(numBytesToRead)
+	t.Log(string(p))
+	_, _ = r.Discard(numBytesToRead)
 }
