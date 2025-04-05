@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -198,4 +199,48 @@ func TestReadCache(t *testing.T) {
 	p, _ := r.Peek(numBytesToRead)
 	t.Log(string(p))
 	_, _ = r.Discard(numBytesToRead)
+}
+
+func TestFanIn(t *testing.T) {
+	t.Log(runtime.NumGoroutine())
+	c := fanIn(boring("Joe"), boring("Ann"))
+	for m := range c {
+		t.Log(m)
+	}
+	t.Log("You’re both boring; I’m outta here.")
+	t.Log(runtime.NumGoroutine())
+}
+
+// https://dev.to/shrsv/the-multiplexing-fan-in-pattern-in-go-concurrency-1c53
+func fanIn(input1, input2 <-chan string) <-chan string {
+	c := make(chan string)
+	go func() {
+		for m := range input1 {
+			c <- m
+		}
+	}()
+	go func() {
+		for m := range input2 {
+			c <- m
+		}
+	}()
+	return c
+}
+
+func boring(name string) <-chan string {
+	c := make(chan string)
+	i := 0
+	ticker := time.NewTicker(500 * time.Millisecond)
+	go func() {
+		defer ticker.Stop()
+		defer close(c)
+		for range ticker.C {
+			c <- fmt.Sprintf("%s says %d", name, i)
+			i++
+			if i >= 10 {
+				return
+			}
+		}
+	}()
+	return c
 }
