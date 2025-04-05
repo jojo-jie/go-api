@@ -203,44 +203,48 @@ func TestReadCache(t *testing.T) {
 
 func TestFanIn(t *testing.T) {
 	t.Log(runtime.NumGoroutine())
-	c := fanIn(boring("Joe"), boring("Ann"))
-	for m := range c {
-		t.Log(m)
+	alice := make(chan string)
+	bob := make(chan string)
+	go func() {
+		for i := 0; i < 3; i++ {
+			alice <- fmt.Sprintf("Alice %d", i)
+		}
+		close(alice)
+	}()
+	go func() {
+		for i := 0; i < 3; i++ {
+			bob <- fmt.Sprintf("Bob %d", i)
+		}
+		close(bob)
+	}()
+
+	c := fanIn(alice, bob)
+	for msg := range c {
+		t.Log(msg)
 	}
-	t.Log("You’re both boring; I’m outta here.")
 	t.Log(runtime.NumGoroutine())
 }
 
 // https://dev.to/shrsv/the-multiplexing-fan-in-pattern-in-go-concurrency-1c53
-func fanIn(input1, input2 <-chan string) <-chan string {
+func fanIn(inputs ...<-chan string) <-chan string {
 	c := make(chan string)
-	go func() {
-		for m := range input1 {
-			c <- m
-		}
-	}()
-	go func() {
-		for m := range input2 {
-			c <- m
-		}
-	}()
-	return c
-}
+	var wg sync.WaitGroup
+	wg.Add(len(inputs))
 
-func boring(name string) <-chan string {
-	c := make(chan string)
-	i := 0
-	ticker := time.NewTicker(500 * time.Millisecond)
-	go func() {
-		defer ticker.Stop()
-		defer close(c)
-		for range ticker.C {
-			c <- fmt.Sprintf("%s says %d", name, i)
-			i++
-			if i >= 10 {
-				return
+	// Launch a goroutine per input
+	for _, input := range inputs {
+		go func(ch <-chan string) {
+			defer wg.Done()
+			for v := range ch {
+				c <- v
 			}
-		}
+		}(input)
+	}
+
+	// Close output channel when all inputs are done
+	go func() {
+		wg.Wait()
+		close(c)
 	}()
 	return c
 }
