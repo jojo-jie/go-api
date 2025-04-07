@@ -3,10 +3,13 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -247,4 +250,42 @@ func fanIn(inputs ...<-chan string) <-chan string {
 		close(c)
 	}()
 	return c
+}
+
+// Predictable Object Sizes: When you're dealing with objects of consistent size
+// 可预测的对象大小：当您处理大小一致的对象时
+// High-Frequency Allocations: When you're creating and destroying many objects rapidly
+// 高频分配：当您快速创建和销毁许多对象时
+// Short-Lived Objects: When objects are used briefly and then discarded
+// 短暂对象：当对象被短暂使用后即被丢弃时
+// GC Pressure: When garbage collection is causing performance issues
+// 垃圾收集压力：当垃圾收集导致性能问题时
+func TestSyncPool(t *testing.T) {
+	data := `{"name":"Alice","age":25}`
+	r := strings.NewReader(data)
+	p := Pool{}
+	b := p.Get(r)
+	defer p.Put(b)
+	var person map[string]any
+	if err := b.Decode(&person); err != nil {
+		t.Error(err)
+	}
+
+	t.Logf("%+v\n", person)
+}
+
+type Pool struct {
+	pool sync.Pool
+}
+
+func (p *Pool) Get(r io.Reader) *json.Decoder {
+	buf := p.pool.Get()
+	if buf == nil {
+		return json.NewDecoder(r)
+	}
+	return buf.(*json.Decoder)
+}
+
+func (p *Pool) Put(decoder *json.Decoder) {
+	p.pool.Put(decoder)
 }
