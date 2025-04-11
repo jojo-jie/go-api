@@ -272,6 +272,25 @@ func TestSyncPool(t *testing.T) {
 	}
 
 	t.Logf("%+v\n", person)
+
+	// Let's make one of our circles!
+	myCircle := GeometricCircle{
+		// Gotta set up the embedded Point part.
+		Point: Point{
+			XCoordinate: 10,
+			YCoordinate: 20,
+		},
+		// And the Circle's own bit.
+		Radius: 5.5,
+	}
+	// You can grab the embedded fields directly! Feels like XCoordinate is part of myCircle.
+	fmt.Printf("Center X: %d, Radius: %.2f\n", myCircle.XCoordinate, myCircle.Radius)
+	// Output: Center X: 10, Radius: 5.50
+	// And call the method from Point directly too!
+	myCircle.DisplayLocation() // Output: Coordinates: [10, 20]
+	fmt.Println()              // Another space... OCD maybe? haha
+	// Finally, call the method that belongs only to GeometricCircle.
+	myCircle.Describe() // Output: Circle with radius 5.50 centered at Coordinates: [10, 20]
 }
 
 type Pool struct {
@@ -288,4 +307,31 @@ func (p *Pool) Get(r io.Reader) *json.Decoder {
 
 func (p *Pool) Put(decoder *json.Decoder) {
 	p.pool.Put(decoder)
+}
+
+// Just a basic 'Point' struct for coordinates. Simple, right?
+type Point struct {
+	XCoordinate int // Let's use clear names, helps later!
+	YCoordinate int
+}
+
+// Here's a method for the Point type.
+func (centerPoint Point) DisplayLocation() {
+	// 'centerPoint' is just the name we give the Point inside this function.
+	fmt.Printf("Coordinates: [%d, %d]", centerPoint.XCoordinate, centerPoint.YCoordinate)
+}
+
+// Now, a 'Circle' struct.
+// See? It *has* a center point and a radius. Makes sense.
+type GeometricCircle struct {
+	Point  // This is the Go magic! Embed Point directly. No field name needed!
+	Radius float64
+}
+
+// And a method just for GeometricCircle.
+func (circle GeometricCircle) Describe() {
+	fmt.Printf("Circle with radius %.2f centered at ", circle.Radius)
+	// We can totally call the method from the embedded Point! How neat is that?
+	circle.DisplayLocation()
+	fmt.Println() // Just adding a space for neatness.
 }
