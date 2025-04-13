@@ -335,3 +335,49 @@ func (circle GeometricCircle) Describe() {
 	circle.DisplayLocation()
 	fmt.Println() // Just adding a space for neatness.
 }
+
+// https://dev.to/tuna99/why-memory-alignment-matters-in-go-making-your-structs-lean-and-fast-1kfk
+// Best Practices for Struct Layout in Go
+// ✅ Go 中结构体布局的最佳实践
+// Order fields from largest to smallest alignment.
+// 按照从大到小的对齐顺序排列字段。
+// Group fields with the same size together.
+// 将相同大小的字段分组。
+// Consider memory layout when defining high-volume or performance-critical structs.
+// 在定义高容量或性能关键的结构体时，考虑内存布局。
+// Use go vet -fieldalignment for automatic suggestions.
+// 使用 go vet -fieldalignment 进行自动建议。
+type PoorlyAligned struct {
+	a byte
+	b int32
+	c int64
+}
+
+type WellAligned struct {
+	c int64
+	b int32
+	a byte
+}
+
+var poorlySlice = make([]PoorlyAligned, 1_000_000)
+var wellSlice = make([]WellAligned, 1_000_000)
+
+func BenchmarkPoorlyAligned(b *testing.B) {
+	var sum int64
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for i := range poorlySlice {
+			sum += poorlySlice[i].c
+		}
+	}
+}
+
+func BenchmarkWellAligned(b *testing.B) {
+	var sum int64
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		for i := range wellSlice {
+			sum += wellSlice[i].c
+		}
+	}
+}
