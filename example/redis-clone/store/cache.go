@@ -2,6 +2,8 @@ package store
 
 import (
 	"container/list"
+	"fmt"
+	"log"
 	"sync"
 	"time"
 )
@@ -13,11 +15,11 @@ type Item struct {
 }
 
 type Cache struct {
-	mu      sync.RWMutex     // Mutex to ensure thread safety for concurrent access to the cache
-	items   map[string]*Item // Map that stores cache items by their key
-	lru     *list.List       // Doubly linked list used for tracking the access order of cache items (for LRU eviction)
-	maxSize int              // Maximum number of items the cache can hold before eviction occurs
-	persist *Persistence     // Optional persistence mechanism for appending commands to a file
+	mu      sync.RWMutex
+	items   map[string]*Item
+	lru     *list.List
+	maxSize int
+	persist *Persistence
 }
 
 func NewCache(maxSize int, persist *Persistence) *Cache {
@@ -26,5 +28,43 @@ func NewCache(maxSize int, persist *Persistence) *Cache {
 		persist: persist,
 		items:   map[string]*Item{},
 		lru:     list.New(),
+	}
+}
+
+func (c *Cache) Set(key string, value string, ttl time.Duration, replaying bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var expiresAt time.Time
+	if ttl != 0 {
+		expiresAt = time.Now().Add(ttl)
+	}
+
+	if item, exists := c.items[key]; exists {
+		item.value = value
+		item.expiresAt = expiresAt
+		c.lru.MoveToFront(item.elem)
+	} else {
+		elem := c.lru.PushFront(key)
+		c.items[key] = &Item{
+			value:     value,
+			expiresAt: expiresAt,
+			elem:      elem,
+		}
+	}
+
+	if c.lru.Len() > c.maxSize {
+		oldest := c.lru.Back()
+		if oldest != nil {
+			delete(c.items, oldest.Value.(string))
+			c.lru.Remove(oldest)
+		}
+	}
+
+	if c.persist != nil && !replaying {
+		cmd := fmt.Sprintf("SET %s %s", key, value)
+		err := c.persist.Append(cmd)
+		if err != nil {
+			log.Println("Failed to append to AOF file:", err)
+		}
 	}
 }
