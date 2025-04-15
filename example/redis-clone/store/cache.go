@@ -68,3 +68,19 @@ func (c *Cache) Set(key string, value string, ttl time.Duration, replaying bool)
 		}
 	}
 }
+
+func (c *Cache) Get(key string) (string, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	item, exists := c.items[key]
+	if !exists {
+		return "", exists
+	}
+	if !item.expiresAt.IsZero() && item.expiresAt.Before(time.Now()) {
+		c.lru.Remove(item.elem)
+		delete(c.items, key)
+		return "", exists
+	}
+	c.lru.MoveToFront(item.elem)
+	return item.value, true
+}
