@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/ThinkInAIXYZ/go-mcp/protocol"
 	"github.com/ThinkInAIXYZ/go-mcp/server"
@@ -9,12 +8,10 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
+// go build -o ~/workspace/mcphost/name main.go
 func main() {
 	s, err := server.NewServer(
 		transport.NewStdioServerTransport(),
@@ -69,7 +66,7 @@ func main() {
 		}
 		return nil
 	})
-	g.Go(func() error {
+	/*g.Go(func() error {
 		quit := make(chan os.Signal)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
@@ -77,7 +74,7 @@ func main() {
 		defer cancel()
 		log.Println("shutting down server...")
 		return s.Shutdown(ctx)
-	})
+	})*/
 	if err := g.Wait(); err != nil {
 		log.Fatalf("%+v", err)
 	}
