@@ -84,3 +84,39 @@ func (c *Cache) Get(key string) (string, bool) {
 	c.lru.MoveToFront(item.elem)
 	return item.value, true
 }
+
+func (c *Cache) StartCleaningServer() {
+	ticker := time.NewTicker(time.Minute * 1)
+	defer ticker.Stop()
+	for range ticker.C {
+		log.Println("Running cache cleanup")
+		c.cleanExpiredItems()
+	}
+}
+
+func (c *Cache) cleanExpiredItems() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for e := c.lru.Back(); e != nil; e = e.Prev() {
+		item := c.items[e.Value.(string)]
+		if item.expiresAt.IsZero() {
+			continue
+		}
+
+		if time.Now().After(item.expiresAt) {
+			c.lru.Remove(e)
+			delete(c.items, e.Value.(string))
+			log.Printf("Removed expired item: %s\n", e.Value)
+		}
+	}
+
+	// If the cache exceeds the maximum size, evict the least recently used item
+	if c.lru.Len() > c.maxSize {
+		oldest := c.lru.Back()
+		if oldest != nil {
+			delete(c.items, oldest.Value.(string))
+			c.lru.Remove(oldest)
+		}
+	}
+}
