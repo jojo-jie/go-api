@@ -133,6 +133,7 @@ func (s *Server) Start(address string) {
 	}
 }
 
+// https://dev.to/vishaaxl/intermediate-go-tutorial-building-your-own-redis-like-in-memory-cache-5aa2
 func main() {
 	aofFilename := "cache.aof"
 

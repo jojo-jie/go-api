@@ -381,3 +381,54 @@ func BenchmarkWellAligned(b *testing.B) {
 		}
 	}
 }
+
+type User struct {
+	name string
+	age  int
+}
+
+// Iterator 接口
+type Iterator interface {
+	hasNext() bool
+	getNext() *User
+}
+
+// UserCollection 用户集合
+type UserCollection struct {
+	users []*User
+}
+
+func (u *UserCollection) createIterator() Iterator {
+	return &UserIterator{users: u.users}
+}
+
+// UserIterator 具体迭代器
+type UserIterator struct {
+	index int
+	users []*User
+}
+
+func (u *UserIterator) hasNext() bool {
+	return u.index < len(u.users)
+}
+
+func (u *UserIterator) getNext() *User {
+	if u.hasNext() {
+		user := u.users[u.index]
+		u.index++
+		return user
+	}
+	return nil
+}
+
+func TestIterator(t *testing.T) {
+	user1 := &User{name: "Alice", age: 30}
+	user2 := &User{name: "Bob", age: 25}
+	collection := &UserCollection{users: []*User{user1, user2}}
+
+	iterator := collection.createIterator()
+	for iterator.hasNext() {
+		user := iterator.getNext()
+		t.Logf("User: %v\n", user)
+	}
+}
