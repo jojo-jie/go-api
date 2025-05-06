@@ -3,8 +3,8 @@ module https-server
 go 1.24
 
 require (
-	github.com/lesismal/llib v1.1.10
-	github.com/lesismal/nbio v1.3.10
+	github.com/lesismal/llib v1.2.1
+	github.com/lesismal/nbio v1.6.4
 )
 
 require (
