@@ -446,7 +446,6 @@ const (
 	_readinessDrainDelay = 5 * time.Second
 )
 
-var isShuttingDown atomic.Boo
 var isShuttingDown atomic.Bool
 
 func TestGracefulShutdown(t *testing.T) {
