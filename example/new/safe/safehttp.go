@@ -18,21 +18,14 @@ func (w *HttpWriter) WriteHeader(statusCode int) {
 	w.w.WriteHeader(statusCode)
 }
 
-// it's actually a good idea to implement 
-// it's actually a good idea to implement a
-// Flusher version for our writer as well
-
-	*HttpWriter  // wrap our "normal" writer
-	http.Flusher // keep a ref to the wrapped Flusher
-	http.Flusher  // keep a ref to the wrapped Flusher
+type HttpWriterFlusher struct {
+	*HttpWriter
+	http.Flusher
 }
 
 func (w *HttpWriterFlusher) Flush() {
 	w.Flusher.Flush()
 }
-
-// modify the constructor to either return HttpWriter or
-// HttpWriterFlusher depending on the writer being wrapped
 
 func NewHttpWriter(w http.ResponseWriter) http.ResponseWriter {
 	httpWriter := &HttpWriter{
