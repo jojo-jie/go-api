@@ -227,3 +227,21 @@ func Ret(w http.ResponseWriter, response any) {
 		return
 	}
 }
+
+type HttpWriter struct {
+	w http.ResponseWriter // wrap an existing writer
+
+	headerWritten bool
+}
+
+func (w *HttpWriter) Write(data []byte) (int, error) {
+	if !w.headerWritten {
+		log.Println("warn: invoked Write() without WriteHeader(statusCode)")
+	}
+	return w.w.Write(data)
+}
+
+func (w *HttpWriter) WriteHeader(statusCode int) {
+	w.w.WriteHeader(statusCode)
+	w.headerWritten = true
+}
