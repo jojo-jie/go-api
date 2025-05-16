@@ -509,3 +509,59 @@ func TestGracefulShutdown(t *testing.T) {
 
 	log.Println("Server shut down gracefully.")
 }
+
+func TestMux(t *testing.T) {
+	mux := http.NewServeMux()
+	// 1. 方法匹配 (Method Matching)
+	mux.HandleFunc("GET /api/users", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "获取用户列表 (GET)")
+	})
+	mux.HandleFunc("POST /api/users", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "创建新用户 (POST)")
+	})
+
+	// 2. 主机匹配 (Host Matching)
+	mux.HandleFunc("api.example.com/data", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "来自 api.example.com 的数据服务")
+	})
+	mux.HandleFunc("www.example.com/data", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "来自 www.example.com 的数据展示")
+	})
+
+	// 3. 路径通配符 (Path Wildcards)
+	// 单段通配符
+	mux.HandleFunc("GET /users/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		fmt.Fprintf(w, "用户信息 (GET), 用户ID: %s", id)
+	})
+	// 多段通配符
+	mux.HandleFunc("/files/{filepath...}", func(w http.ResponseWriter, r *http.Request) {
+		path := r.PathValue("filepath")
+		fmt.Fprintf(w, "文件路径: %s", path)
+	})
+
+	// 4. 结束匹配符 (End Matcher) 与优先级
+	// 精确匹配根路径
+	mux.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "精确匹配根路径")
+	})
+	// 匹配 /admin 结尾
+	mux.HandleFunc("/admin/{$}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "精确匹配 /admin 路径")
+	})
+	// 匹配所有 /admin 开头的路径 (注意尾部斜杠，优先级低于精确匹配)
+	mux.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "匹配所有 /admin/ 开头的路径")
+	})
+
+	// 5. 优先级规则：更具体的模式优先
+	mux.HandleFunc("/assets/images/thumbnails/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "缩略图资源")
+	})
+	mux.HandleFunc("/assets/images/", func(w http.ResponseWriter, r *http.Request) { // 更一般的模式
+		fmt.Fprintf(w, "所有图片资源")
+	})
+
+	fmt.Println("Server is listening on :8080...")
+	http.ListenAndServe(":8080", mux)
+}
