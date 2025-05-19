@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/time/rate"
 	"io"
 	"log"
 	"net"
@@ -564,4 +565,19 @@ func TestMux(t *testing.T) {
 
 	fmt.Println("Server is listening on :8080...")
 	http.ListenAndServe(":8080", mux)
+}
+
+func TestRate(t *testing.T) {
+	c := make(chan int)
+	r := rate.Limit(1.0)
+	l := rate.NewLimiter(r, 5)
+	doSomethingWithAllow(l, 10, c)
+}
+
+func doSomethingWithAllow(l *rate.Limiter, x int, c chan int) {
+	if l.Allow() {
+		fmt.Printf("Allowing %d to run\n", x)
+	}
+
+	c <- x
 }
