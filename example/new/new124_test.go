@@ -581,3 +581,24 @@ func doSomethingWithAllow(l *rate.Limiter, x int, c chan int) {
 
 	c <- x
 }
+
+func processData(inputs [][]byte) {
+	buffer := make([]byte, 1024) // Pre-allocate
+
+	for _, input := range inputs {
+		n := copy(buffer, input)
+		fmt.Printf("Processed %d bytes\n", n)
+	}
+}
+
+var bufferPool = sync.Pool{
+	New: func() interface{} {
+		return make([]byte, 1024)
+	},
+}
+
+func handleRequest(data []byte) {
+	buf := bufferPool.Get().([]byte)
+	defer bufferPool.Put(buf)
+	copy(buf, data)
+}
