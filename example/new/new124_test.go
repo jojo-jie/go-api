@@ -602,3 +602,42 @@ func handleRequest(data []byte) {
 	defer bufferPool.Put(buf)
 	copy(buf, data)
 }
+
+func collectData(inputs []int) []int {
+	result := make([]int, 0, len(inputs))
+
+	for _, val := range inputs {
+		result = append(result, val)
+	}
+	return result
+}
+
+func buildMessage(parts []string) string {
+	var builder strings.Builder
+	builder.Grow(100)
+	for _, part := range parts {
+		builder.WriteString(part)
+	}
+	return builder.String()
+}
+
+type Data struct {
+	value int
+}
+
+func processData2() Data {
+	d := Data{value: 42}
+	return d // Stack allocated
+}
+func processPointer() *Data {
+	d := Data{value: 42}
+	return &d // Heap allocated
+}
+
+func calculate(inputs []int) int {
+	sum := 0
+	for _, val := range inputs {
+		sum += val
+	}
+	return sum
+}
