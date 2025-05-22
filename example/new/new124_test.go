@@ -641,3 +641,15 @@ func calculate(inputs []int) int {
 	}
 	return sum
 }
+
+func TestNewHttp(t *testing.T) {
+	http.HandleFunc("/", OptimizedHandler)
+	http.ListenAndServe(":8080", nil)
+}
+
+func OptimizedHandler(w http.ResponseWriter, r *http.Request) {
+	parts := make([]string, 0, 2)
+	parts = append(parts, "Hello , ")
+	parts = append(parts, r.URL.Query().Get("name"))
+	w.Write([]byte(buildMessage(parts)))
+}
