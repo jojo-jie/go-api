@@ -653,3 +653,30 @@ func OptimizedHandler(w http.ResponseWriter, r *http.Request) {
 	parts = append(parts, r.URL.Query().Get("name"))
 	w.Write([]byte(buildMessage(parts)))
 }
+
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		return bytes.NewBuffer(make([]byte, 1024))
+	},
+}
+
+func GetBuffer() *bytes.Buffer {
+	return bufPool.Get().(*bytes.Buffer)
+}
+
+func PutBuffer(buf *bytes.Buffer) {
+	buf.Reset()
+	bufPool.Put(buf)
+}
+
+var decoderPool = sync.Pool{
+	New: func() interface{} {
+		return json.NewDecoder(nil)
+	},
+}
+
+func HandleRequest(r io.Reader) {
+	decoder := decoderPool.Get().(*json.Decoder)
+	decoder.Decode(r)
+	defer decoderPool.Put(decoder)
+}
