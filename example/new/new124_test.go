@@ -680,3 +680,25 @@ func HandleRequest(r io.Reader) {
 	decoder.Decode(r)
 	defer decoderPool.Put(decoder)
 }
+
+type QueryParams struct {
+	Table  string
+	Filter map[string]interface{}
+}
+
+var queryPool = sync.Pool{
+	New: func() interface{} {
+		return &QueryParams{Filter: make(map[string]interface{})}
+	},
+}
+
+func NewQuery() *QueryParams {
+	q := queryPool.Get().(*QueryParams)
+	q.Table = "" // Reset fields
+	clear(q.Filter)
+	return q
+}
+
+func ReleaseQuery(q *QueryParams) {
+	queryPool.Put(q)
+}
