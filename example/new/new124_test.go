@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"golang.org/x/time/rate"
 	"io"
+	"iter"
 	"log"
 	"net"
 	"net/http"
@@ -701,4 +702,21 @@ func NewQuery() *QueryParams {
 
 func ReleaseQuery(q *QueryParams) {
 	queryPool.Put(q)
+}
+
+func fib0() iter.Seq[int] {
+	return func(yield func(int) bool) {
+		for a, b := 0, 1; yield(a); a, b = b, a+b {
+			// deliberately empty
+		}
+	}
+}
+
+func TestFib(t *testing.T) {
+	for n := range fib0() {
+		if n > 100 {
+			break
+		}
+		t.Logf("%d ", n)
+	}
 }
