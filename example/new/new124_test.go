@@ -719,4 +719,39 @@ func TestFib(t *testing.T) {
 		}
 		t.Logf("%d ", n)
 	}
+
+	seq := fib2()
+	for n := range seq {
+		if n > 10 {
+			break
+		}
+		t.Logf("%d ", n)
+	}
+	fmt.Println()
+	for n := range seq {
+		if n > 100 {
+			break
+		}
+		t.Logf("%d ", n)
+	}
+	fmt.Println()
+	for n := range seq {
+		if n > 1000 {
+			break
+		}
+		t.Logf("%d ", n)
+	}
+}
+
+func fib2() iter.Seq[int] {
+	var n int
+	return func(yield func(n int) bool) {
+		if n > 1 {
+			return
+		}
+		for a, b := 0, 1; yield(a); a, b = b, a+b {
+			// deliberately empty body
+		}
+		n++
+	}
 }
