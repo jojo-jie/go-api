@@ -13,6 +13,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"os/signal"
 	"reflect"
 	"runtime"
@@ -753,5 +754,41 @@ func fib2() iter.Seq[int] {
 			// deliberately empty body
 		}
 		n++
+	}
+}
+
+func TestFib3(t *testing.T) {
+	src := []byte("foo\nbar\nbaz\n")
+	seq := Lines(src)
+	for s := range seq {
+		os.Stdout.Write(s)
+	}
+	for s := range seq { // pass that mutates the source slice
+		if len(s) == 0 {
+			continue
+		}
+		s[0] = 'a'
+	}
+	fmt.Println()
+	for s := range seq {
+		os.Stdout.Write(s)
+	}
+}
+
+func Lines(s []byte) iter.Seq[[]byte] {
+	return func(yield func([]byte) bool) {
+		s := s // local copy
+		for len(s) > 0 {
+			var line []byte
+			if i := bytes.IndexByte(s, '\n'); i >= 0 {
+				line, s = s[:i+1], s[i+1:]
+			} else {
+				line, s = s, nil
+			}
+			if !yield(line[:len(line):len(line)]) {
+				return
+			}
+		}
+		return
 	}
 }
