@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
+	"new/logging"
 	"os"
 	"os/signal"
 	"syscall"
@@ -170,4 +172,14 @@ func TestHttp(t *testing.T) {
 	if err := server.Start(); err != nil {
 		t.Errorf("Server failed: %v", err)
 	}
+}
+
+func TestNewErr(t *testing.T) {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+	// 创建带属性的错误
+	err := logging.Errorf("failed to process user %s", slog.String("user_id", "123"), "alice")
+
+	// 记录错误
+	slog.Error("Processing failed", logging.Error(err))
 }
