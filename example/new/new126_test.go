@@ -175,10 +175,16 @@ func TestHttp(t *testing.T) {
 }
 
 func TestNewErr(t *testing.T) {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	// 创建带属性的错误
-	err := logging.Errorf("failed to process user %s", slog.String("user_id", "123"), "alice")
+	handler, err := logging.NewDailyFileHandler("./logs", "app", ".log")
+	if err != nil {
+		panic(err)
+	}
+	defer handler.Close()
+
+	// 设置为全局默认日志器
+	slog.SetDefault(slog.New(handler))
+
+	err = logging.Errorf("failed to process user %s", slog.String("user_id", "jojo"), "alice")
 
 	// 记录错误
 	slog.Error("Processing failed", logging.Error(err))
