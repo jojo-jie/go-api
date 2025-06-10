@@ -184,8 +184,8 @@ func TestNewErr(t *testing.T) {
 	// 设置为全局默认日志器
 	slog.SetDefault(slog.New(handler))
 
-	err = logging.Errorf("failed to process user %s", slog.String("user_id", "jojo"), "alice")
+	err = logging.Errorf("failed to process user %s", slog.String("user_id", "jojo2"), "alice")
 
 	// 记录错误
-	slog.Error("Processing failed", logging.Error(err))
+	slog.Info("Processing failed", logging.Error(err, "jojo-group"))
 }

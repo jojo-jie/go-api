@@ -49,7 +49,7 @@ func AttrsFromError(err error) []slog.Attr {
 	return nil
 }
 
-func Error(err error) slog.Attr {
+func Error(err error, groupKey string) slog.Attr {
 	attrs := AttrsFromError(err)
 	if len(attrs) == 0 {
 		return slog.String("error", err.Error())
@@ -60,5 +60,5 @@ func Error(err error) slog.Attr {
 		args = append(args, attr)
 	}
 
-	return slog.Group("", args...)
+	return slog.Group(groupKey, args...)
 }

@@ -37,7 +37,6 @@ func NewDailyFileHandler(dir, prefix, ext string) (*DailyFileHandler, error) {
 		return nil, err
 	}
 
-	d.handler = slog.NewJSONHandler(d.file, nil)
 	return d, nil
 }
 
