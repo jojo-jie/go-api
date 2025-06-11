@@ -175,7 +175,7 @@ func TestHttp(t *testing.T) {
 }
 
 func TestNewErr(t *testing.T) {
-	handler, err := logging.NewDailyFileHandler("./logs", "app", ".log")
+	handler, err := logging.NewDailyFileHandler("./logs", "app", ".log", &slog.HandlerOptions{Level: slog.LevelDebug})
 	if err != nil {
 		panic(err)
 	}

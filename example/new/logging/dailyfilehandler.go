@@ -11,29 +11,30 @@ import (
 
 // DailyFileHandler 是一个支持按天滚动日志文件的 Handler
 type DailyFileHandler struct {
-	dir        string       // 日志目录
-	prefix     string       // 文件前缀，如 "app"
-	ext        string       // 文件扩展名，如 ".log"
-	file       *os.File     // 当前打开的日志文件
-	handler    slog.Handler // 实际使用的 Handler（比如 JSON）
-	currentDay string       // 当前是哪一天
-	mu         sync.Mutex   // 确保并发安全
+	dir        string               // 日志目录
+	prefix     string               // 文件前缀，如 "app"
+	ext        string               // 文件扩展名，如 ".log"
+	file       *os.File             // 当前打开的日志文件
+	handler    slog.Handler         // 实际使用的 Handler（比如 JSON）
+	currentDay string               // 当前是哪一天
+	opts       *slog.HandlerOptions // 可选配置
+	mu         sync.Mutex           // 确保并发安全
 }
 
 // NewDailyFileHandler 创建一个新的按天日志处理器
-func NewDailyFileHandler(dir, prefix, ext string) (*DailyFileHandler, error) {
-	d := &DailyFileHandler{
-		dir:    dir,
-		prefix: prefix,
-		ext:    ext,
-	}
-
+func NewDailyFileHandler(dir, prefix, ext string, opts *slog.HandlerOptions) (*DailyFileHandler, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
 
-	err := d.rotate()
-	if err != nil {
+	d := &DailyFileHandler{
+		dir:    dir,
+		prefix: prefix,
+		ext:    ext,
+		opts:   opts,
+	}
+
+	if err := d.rotate(); err != nil {
 		return nil, err
 	}
 
@@ -52,19 +53,25 @@ func (d *DailyFileHandler) rotate() error {
 		return nil // 同一天，不需要换文件
 	}
 
+	// 关闭旧文件
 	if d.file != nil {
-		_ = d.file.Close()
+		if err := d.file.Close(); err != nil {
+			return err
+		}
 	}
 
+	// 打开新文件
 	filename := filepath.Join(d.dir, d.prefix+"."+day+d.ext)
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
 
+	// 更新状态
 	d.file = file
 	d.currentDay = day
-	d.handler = slog.NewJSONHandler(d.file, nil)
+	d.handler = slog.NewJSONHandler(d.file, d.opts)
+
 	return nil
 }
 
@@ -75,7 +82,10 @@ func (d *DailyFileHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (d *DailyFileHandler) Handle(ctx context.Context, r slog.Record) error {
-	d.rotate() // 每次写入前检查是否跨天
+	// 先检查是否需要 rotate，再写入
+	if err := d.rotate(); err != nil {
+		return err
+	}
 	return d.handler.Handle(ctx, r)
 }
 
@@ -87,6 +97,7 @@ func (d *DailyFileHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 		file:       d.file,
 		handler:    d.handler.WithAttrs(attrs),
 		currentDay: d.currentDay,
+		opts:       d.opts,
 		mu:         sync.Mutex{},
 	}
 }
@@ -99,6 +110,7 @@ func (d *DailyFileHandler) WithGroup(name string) slog.Handler {
 		file:       d.file,
 		handler:    d.handler.WithGroup(name),
 		currentDay: d.currentDay,
+		opts:       d.opts,
 		mu:         sync.Mutex{},
 	}
 }
