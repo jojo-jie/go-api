@@ -10,6 +10,7 @@ import (
 	"new/logging"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -188,4 +189,34 @@ func TestNewErr(t *testing.T) {
 
 	// 记录错误
 	slog.Info("Processing failed", logging.Error(err, "jojo-group"))
+}
+
+type Cache struct {
+	data sync.Map
+}
+
+func (c *Cache) GetOrSet(key string, fetch func() string) string {
+	if v, ok := c.data.Load(key); ok {
+		return v.(string)
+	}
+	v := fetch()
+	c.data.Store(key, v)
+	return v
+}
+
+func TestSyncMap(t *testing.T) {
+	cache := Cache{}
+	fetch := func() string {
+		time.Sleep(100 * time.Millisecond)
+		return "user123"
+	}
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			t.Log(cache.GetOrSet("user:123", fetch))
+		}()
+	}
+	wg.Wait()
 }
