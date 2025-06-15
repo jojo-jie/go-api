@@ -215,8 +215,35 @@ func TestSyncMap(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			t.Log(cache.GetOrSet("user:123", fetch))
+			cache.GetOrSet("user:123", fetch)
+		}()
+	}
+	tm := TaskManager{}
+	for i := 0; i < 3; i++ {
+		wg.Add(1)
+		id := fmt.Sprintf("task%d", i)
+		go func() {
+			defer wg.Done()
+			tm.Set(id, "pending")
+			time.Sleep(50 * time.Millisecond)
+			tm.Set(id, "done")
 		}()
 	}
 	wg.Wait()
+	if v, ok := tm.Get("task1"); ok {
+		t.Log(v) // "done"
+	}
+}
+
+type TaskManager struct {
+	tasks sync.Map
+}
+
+func (tm *TaskManager) Set(id string, status string) {
+	tm.tasks.Store(id, status)
+}
+
+func (tm *TaskManager) Get(id string) (string, bool) {
+	v, ok := tm.tasks.Load(id)
+	return v.(string), ok
 }
