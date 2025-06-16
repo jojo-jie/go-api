@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/sync/singleflight"
 	"log"
 	"log/slog"
 	"net/http"
@@ -246,4 +247,18 @@ func (tm *TaskManager) Set(id string, status string) {
 func (tm *TaskManager) Get(id string) (string, bool) {
 	v, ok := tm.tasks.Load(id)
 	return v.(string), ok
+}
+
+var g singleflight.Group
+var m sync.Map
+
+func getStuff(key string) string {
+	if v, ok := m.Load(key); ok {
+		return v.(string)
+	}
+	v, _, _ := g.Do(key, func() (interface{}, error) {
+		return "data", nil
+	})
+	m.Store(key, v)
+	return v.(string)
 }
