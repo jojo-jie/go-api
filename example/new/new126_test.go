@@ -234,6 +234,7 @@ func TestSyncMap(t *testing.T) {
 	if v, ok := tm.Get("task1"); ok {
 		t.Log(v) // "done"
 	}
+	t.Log(Double(2))
 }
 
 type TaskManager struct {
@@ -261,4 +262,12 @@ func getStuff(key string) string {
 	})
 	m.Store(key, v)
 	return v.(string)
+}
+
+type OnlyInt interface {
+	int | int8 | int16 | int32 | int64
+}
+
+func Double[T OnlyInt](v T) T {
+	return v * 2
 }
