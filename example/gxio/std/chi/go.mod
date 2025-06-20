@@ -3,7 +3,7 @@ module chi
 go 1.24
 
 require (
-	github.com/go-chi/chi/v5 v5.0.8
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/lesismal/nbio v1.3.11
 )
 
