@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 	"log"
 	"log/slog"
+	"maps"
 	"net/http"
 	"new/logging"
 	"os"
@@ -270,4 +272,74 @@ type OnlyInt interface {
 
 func Double[T OnlyInt](v T) T {
 	return v * 2
+}
+
+func TestBuy(t *testing.T) {
+	acc := NewAccounts(map[string]int{
+		"alice": 50,
+	})
+	castle := LegoSet{name: "Castle", price: 40}
+	plants := LegoSet{name: "Plants", price: 20}
+
+	var g errgroup.Group
+	var mu sync.Mutex
+	g.Go(func() error {
+		mu.Lock()
+		defer mu.Unlock()
+		balance := acc.Get("alice")
+		if balance < castle.price {
+			return errors.New("balance is less than castle")
+		}
+		time.Sleep(5 * time.Millisecond)
+		acc.Set("alice", balance-castle.price)
+		t.Log("Alice bought the castle")
+		return nil
+	})
+	g.Go(func() error {
+		mu.Lock()
+		defer mu.Unlock()
+		balance := acc.Get("alice")
+		if balance < plants.price {
+			return errors.New("balance is less than plants")
+		}
+		time.Sleep(10 * time.Millisecond)
+		acc.Set("alice", balance-plants.price)
+		t.Log("Alice bought the plants")
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		t.Error(err)
+	}
+
+	balance := acc.Get("alice")
+	t.Log("Alice's balance:", balance)
+}
+
+type LegoSet struct {
+	name  string
+	price int
+}
+
+type Accounts struct {
+	bal map[string]int
+	mu  sync.Mutex
+}
+
+func NewAccounts(bal map[string]int) *Accounts {
+	return &Accounts{bal: maps.Clone(bal)}
+}
+
+// Get returns the user's balance.
+func (a *Accounts) Get(name string) int {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.bal[name]
+}
+
+// Set changes the user's balance.
+func (a *Accounts) Set(name string, amount int) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.bal[name] = amount
 }
