@@ -13,6 +13,7 @@ import (
 	"new/logging"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"testing"
@@ -342,4 +343,53 @@ func (a *Accounts) Set(name string, amount int) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.bal[name] = amount
+}
+
+type UserRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+var usernameErr = errors.New("username is too short")
+var emailErr = &MyError{
+	s: "email is invalid",
+}
+var passErr = errors.New("password is too short")
+
+func validateRequest(req UserRequest) error {
+	var errs []error
+	if len(req.Username) < 3 {
+		errs = append(errs, usernameErr)
+	}
+	if !strings.Contains(req.Email, "@") {
+		errs = append(errs, emailErr)
+	}
+	if len(req.Password) < 6 {
+		errs = append(errs, passErr)
+	}
+	return errors.Join(errs...)
+}
+
+type MyError struct {
+	s string
+}
+
+func (e *MyError) Error() string {
+	return e.s
+}
+
+func TestErrsJoin(t *testing.T) {
+	req := UserRequest{
+		Username: "jojo",
+		Email:    "ss",
+		Password: "123",
+	}
+	if err := validateRequest(req); err != nil {
+		var e5 *MyError
+		if errors.As(err, &e5) {
+			t.Errorf("%+v", e5.Error())
+		}
+	}
+
 }
