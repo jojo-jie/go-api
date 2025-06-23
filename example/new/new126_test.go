@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -276,36 +277,40 @@ func Double[T OnlyInt](v T) T {
 }
 
 func TestBuy(t *testing.T) {
+	var p atomic.Pointer[Accounts]
 	acc := NewAccounts(map[string]int{
 		"alice": 50,
 	})
 	castle := LegoSet{name: "Castle", price: 40}
 	plants := LegoSet{name: "Plants", price: 20}
 
+	p.Store(acc)
 	var g errgroup.Group
-	var mu sync.Mutex
 	g.Go(func() error {
-		mu.Lock()
-		defer mu.Unlock()
-		balance := acc.Get("alice")
-		if balance < castle.price {
-			return errors.New("balance is less than castle")
-		}
-		time.Sleep(5 * time.Millisecond)
-		acc.Set("alice", balance-castle.price)
-		t.Log("Alice bought the castle")
-		return nil
-	})
-	g.Go(func() error {
-		mu.Lock()
-		defer mu.Unlock()
-		balance := acc.Get("alice")
+		balance := p.Load().Get("alice")
 		if balance < plants.price {
 			return errors.New("balance is less than plants")
 		}
-		time.Sleep(10 * time.Millisecond)
-		acc.Set("alice", balance-plants.price)
-		t.Log("Alice bought the plants")
+		newAcc := NewAccounts(map[string]int{
+			"alice": balance - plants.price,
+		})
+		if p.CompareAndSwap(acc, newAcc) {
+			t.Log("Alice bought the plants")
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		balance := p.Load().Get("alice")
+		if balance < castle.price {
+			return errors.New("balance is less than castle")
+		}
+		newAcc := NewAccounts(map[string]int{
+			"alice": balance - castle.price,
+		})
+		if p.CompareAndSwap(acc, newAcc) {
+			t.Log("Alice bought the castle")
+		}
 		return nil
 	})
 
@@ -313,8 +318,7 @@ func TestBuy(t *testing.T) {
 		t.Error(err)
 	}
 
-	balance := acc.Get("alice")
-	t.Log("Alice's balance:", balance)
+	t.Log("Alice's balance:", p.Load().Get("alice"))
 }
 
 type LegoSet struct {
@@ -324,7 +328,6 @@ type LegoSet struct {
 
 type Accounts struct {
 	bal map[string]int
-	mu  sync.Mutex
 }
 
 func NewAccounts(bal map[string]int) *Accounts {
@@ -333,16 +336,20 @@ func NewAccounts(bal map[string]int) *Accounts {
 
 // Get returns the user's balance.
 func (a *Accounts) Get(name string) int {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	return a.bal[name]
 }
 
 // Set changes the user's balance.
 func (a *Accounts) Set(name string, amount int) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	a.bal[name] = amount
+}
+
+func (a *Accounts) CompareAndSet(name string, old, new int) bool {
+	if a.bal[name] != old {
+		return false
+	}
+	a.bal[name] = new
+	return true
 }
 
 type UserRequest struct {
