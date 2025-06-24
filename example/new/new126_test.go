@@ -400,3 +400,74 @@ func TestErrsJoin(t *testing.T) {
 	}
 
 }
+
+type Request struct {
+	buyer string
+	set   LegoSet
+}
+
+// A purchase result.
+type Purchase struct {
+	buyer   string
+	set     LegoSet
+	succeed bool
+	balance int // balance after purchase
+}
+
+func Processor(acc map[string]int) (chan<- Request, <-chan Purchase) {
+	in := make(chan Request)
+	out := make(chan Purchase)
+	acc = maps.Clone(acc)
+
+	go func() {
+		for {
+			// Receive the purchase request.
+			req := <-in
+
+			// Handle the purchase.
+			balance := acc[req.buyer]
+			pur := Purchase{buyer: req.buyer, set: req.set, balance: balance}
+			if balance >= req.set.price {
+				pur.balance -= req.set.price
+				pur.succeed = true
+				acc[req.buyer] = pur.balance
+			} else {
+				pur.succeed = false
+			}
+
+			// Send the result.
+			out <- pur
+		}
+	}()
+
+	return in, out
+}
+
+func TestBuy2(t *testing.T) {
+	const buyer = "Alice"
+	acc := map[string]int{buyer: 50}
+
+	wishlist := []LegoSet{
+		{name: "Castle", price: 40},
+		{name: "Plants", price: 20},
+	}
+
+	reqs, purs := Processor(acc)
+
+	// Alice buys stuff.
+	var wg sync.WaitGroup
+	for _, set := range wishlist {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			reqs <- Request{buyer: buyer, set: set}
+			pur := <-purs
+			if pur.succeed {
+				fmt.Printf("%s bought the %s\n", pur.buyer, pur.set.name)
+				fmt.Printf("%s's balance: %d\n", buyer, pur.balance)
+			}
+		}()
+	}
+	wg.Wait()
+	close(reqs)
+}
