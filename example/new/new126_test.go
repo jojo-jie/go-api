@@ -406,12 +406,11 @@ type Request struct {
 	set   LegoSet
 }
 
-// A purchase result.
 type Purchase struct {
 	buyer   string
 	set     LegoSet
+	balance int
 	succeed bool
-	balance int // balance after purchase
 }
 
 func Processor(acc map[string]int) (chan<- Request, <-chan Purchase) {
@@ -420,10 +419,8 @@ func Processor(acc map[string]int) (chan<- Request, <-chan Purchase) {
 	acc = maps.Clone(acc)
 
 	go func() {
-		for {
-			// Receive the purchase request.
-			req := <-in
-
+		defer close(out) // 关闭输出通道
+		for req := range in {
 			// Handle the purchase.
 			balance := acc[req.buyer]
 			pur := Purchase{buyer: req.buyer, set: req.set, balance: balance}
@@ -454,20 +451,40 @@ func TestBuy2(t *testing.T) {
 
 	reqs, purs := Processor(acc)
 
+	// 使用缓冲通道来确保每个响应都被接收
+	resps := make(chan Purchase, len(wishlist))
+
 	// Alice buys stuff.
 	var wg sync.WaitGroup
 	for _, set := range wishlist {
 		wg.Add(1)
-		go func() {
+		go func(set LegoSet) {
 			defer wg.Done()
 			reqs <- Request{buyer: buyer, set: set}
-			pur := <-purs
-			if pur.succeed {
-				fmt.Printf("%s bought the %s\n", pur.buyer, pur.set.name)
-				fmt.Printf("%s's balance: %d\n", buyer, pur.balance)
-			}
-		}()
+		}(set)
 	}
-	wg.Wait()
-	close(reqs)
+
+	// 接收所有购买结果
+	go func() {
+		wg.Wait()
+		close(reqs)
+	}()
+
+	// 收集结果
+	go func() {
+		for pur := range purs {
+			resps <- pur
+		}
+		close(resps)
+	}()
+
+	// 打印结果
+	for pur := range resps {
+		if pur.succeed {
+			t.Logf("%s bought the %s\n", pur.buyer, pur.set.name)
+			t.Logf("%s's balance: %d\n", pur.buyer, pur.balance)
+		} else {
+			t.Logf("%s failed to buy the %s due to insufficient balance.\n", pur.buyer, pur.set.name)
+		}
+	}
 }
