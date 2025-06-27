@@ -488,3 +488,22 @@ func TestBuy2(t *testing.T) {
 		}
 	}
 }
+
+func externalService(ctx context.Context) (string, error) {
+	// 模拟耗时操作（5秒）
+	select {
+	case <-time.After(5 * time.Second):
+		return "response from external service", nil
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+// 带 traceID 的中间件
+func withTrace(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		traceID := r.Header.Get("X-Trace-ID")
+		ctx := context.WithValue(r.Context(), "traceID", traceID)
+		next(w, r.WithContext(ctx))
+	}
+}
