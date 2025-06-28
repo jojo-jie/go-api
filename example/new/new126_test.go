@@ -13,6 +13,7 @@ import (
 	"new/logging"
 	"os"
 	"os/signal"
+	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -505,5 +506,273 @@ func withTrace(next http.HandlerFunc) http.HandlerFunc {
 		traceID := r.Header.Get("X-Trace-ID")
 		ctx := context.WithValue(r.Context(), "traceID", traceID)
 		next(w, r.WithContext(ctx))
+	}
+}
+
+func TestHttpWriter_Write(t *testing.T) {
+	type fields struct {
+		w             http.ResponseWriter
+		headerWritten bool
+	}
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    int
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := &HttpWriter{
+				w:             tt.fields.w,
+				headerWritten: tt.fields.headerWritten,
+			}
+			got, err := w.Write(tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Write() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Write() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHttpWriter_WriteHeader(t *testing.T) {
+	type fields struct {
+		w             http.ResponseWriter
+		headerWritten bool
+	}
+	type args struct {
+		statusCode int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := &HttpWriter{
+				w:             tt.fields.w,
+				headerWritten: tt.fields.headerWritten,
+			}
+			w.WriteHeader(tt.args.statusCode)
+		})
+	}
+}
+
+func TestNewSseHandler(t *testing.T) {
+	tests := []struct {
+		name string
+		want *SseHandler
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewSseHandler(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewSseHandler() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRet(t *testing.T) {
+	type args struct {
+		w        http.ResponseWriter
+		response any
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Ret(tt.args.w, tt.args.response)
+		})
+	}
+}
+
+func TestSseHandler_Factorial(t *testing.T) {
+	type fields struct {
+		clients map[chan string]struct{}
+	}
+	type args struct {
+		w http.ResponseWriter
+		r *http.Request
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &SseHandler{
+				clients: tt.fields.clients,
+			}
+			h.Factorial(tt.args.w, tt.args.r)
+		})
+	}
+}
+
+func TestSseHandler_Serve(t *testing.T) {
+	type fields struct {
+		clients map[chan string]struct{}
+	}
+	type args struct {
+		w http.ResponseWriter
+		r *http.Request
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &SseHandler{
+				clients: tt.fields.clients,
+			}
+			h.Serve(tt.args.w, tt.args.r)
+		})
+	}
+}
+
+func TestSseHandler_SimulateEvents(t *testing.T) {
+	type fields struct {
+		clients map[chan string]struct{}
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &SseHandler{
+				clients: tt.fields.clients,
+			}
+			if err := h.SimulateEvents(); (err != nil) != tt.wantErr {
+				t.Errorf("SimulateEvents() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_clearCosts(t *testing.T) {
+	type args struct {
+		w http.ResponseWriter
+		r *http.Request
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			clearCosts(tt.args.w, tt.args.r)
+		})
+	}
+}
+
+func Test_factorial(t *testing.T) {
+	type args struct {
+		n int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := factorial(tt.args.n); got != tt.want {
+				t.Errorf("factorial() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_fetchProductPrice(t *testing.T) {
+	type args struct {
+		productID string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    float64
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := fetchProductPrice(tt.args.productID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("fetchProductPrice() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("fetchProductPrice() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getCost(t *testing.T) {
+	type args struct {
+		w http.ResponseWriter
+		r *http.Request
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			getCost(tt.args.w, tt.args.r)
+		})
+	}
+}
+
+func Test_getProductPriceHandler(t *testing.T) {
+	type args struct {
+		w http.ResponseWriter
+		r *http.Request
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			getProductPriceHandler(tt.args.w, tt.args.r)
+		})
 	}
 }
