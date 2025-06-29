@@ -117,7 +117,10 @@ func (s *Server) Start() error {
 func (s *Server) handleHealthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status": "ok"}`))
+		_, err := w.Write([]byte(`{"status": "ok"}`))
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -125,7 +128,10 @@ func (s *Server) handleGetUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 实际业务逻辑
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[{"id": 1, "name": "John"}]`))
+		_, err := w.Write([]byte(`[{"id": 1, "name": "John"}]`))
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -135,7 +141,10 @@ func (s *Server) handleGetUser() http.HandlerFunc {
 		id := vars["id"]
 		// 实际业务逻辑
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf(`{"id": %s, "name": "User %s"}`, id, id)))
+		_, err := w.Write([]byte(fmt.Sprintf(`{"id": %s, "name": "User %s"}`, id, id)))
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -157,7 +166,10 @@ func (s *Server) recoveryMiddleware(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				log.Printf("panic: %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(`{"error": "internal server error"}`))
+				_, err := w.Write([]byte(`{"error": "internal server error"}`))
+				if err != nil {
+					return
+				}
 			}
 		}()
 
@@ -186,7 +198,12 @@ func TestNewErr(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	defer handler.Close()
+	defer func(handler *logging.DailyFileHandler) {
+		err := handler.Close()
+		if err != nil {
+
+		}
+	}(handler)
 
 	// 设置为全局默认日志器
 	slog.SetDefault(slog.New(handler))
@@ -517,14 +534,12 @@ func TestHttpWriter_Write(t *testing.T) {
 	type args struct {
 		data []byte
 	}
-	tests := []struct {
+	var tests []struct {
 		name    string
 		fields  fields
 		args    args
 		want    int
 		wantErr bool
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -552,12 +567,10 @@ func TestHttpWriter_WriteHeader(t *testing.T) {
 	type args struct {
 		statusCode int
 	}
-	tests := []struct {
+	var tests []struct {
 		name   string
 		fields fields
 		args   args
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -571,11 +584,9 @@ func TestHttpWriter_WriteHeader(t *testing.T) {
 }
 
 func TestNewSseHandler(t *testing.T) {
-	tests := []struct {
+	var tests []struct {
 		name string
 		want *SseHandler
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -591,11 +602,9 @@ func TestRet(t *testing.T) {
 		w        http.ResponseWriter
 		response any
 	}
-	tests := []struct {
+	var tests []struct {
 		name string
 		args args
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -612,12 +621,10 @@ func TestSseHandler_Factorial(t *testing.T) {
 		w http.ResponseWriter
 		r *http.Request
 	}
-	tests := []struct {
+	var tests []struct {
 		name   string
 		fields fields
 		args   args
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -637,12 +644,10 @@ func TestSseHandler_Serve(t *testing.T) {
 		w http.ResponseWriter
 		r *http.Request
 	}
-	tests := []struct {
+	var tests []struct {
 		name   string
 		fields fields
 		args   args
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -658,12 +663,10 @@ func TestSseHandler_SimulateEvents(t *testing.T) {
 	type fields struct {
 		clients map[chan string]struct{}
 	}
-	tests := []struct {
+	var tests []struct {
 		name    string
 		fields  fields
 		wantErr bool
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -682,11 +685,9 @@ func Test_clearCosts(t *testing.T) {
 		w http.ResponseWriter
 		r *http.Request
 	}
-	tests := []struct {
+	var tests []struct {
 		name string
 		args args
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -699,12 +700,10 @@ func Test_factorial(t *testing.T) {
 	type args struct {
 		n int
 	}
-	tests := []struct {
+	var tests []struct {
 		name string
 		args args
 		want int
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -719,13 +718,11 @@ func Test_fetchProductPrice(t *testing.T) {
 	type args struct {
 		productID string
 	}
-	tests := []struct {
+	var tests []struct {
 		name    string
 		args    args
 		want    float64
 		wantErr bool
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -746,11 +743,9 @@ func Test_getCost(t *testing.T) {
 		w http.ResponseWriter
 		r *http.Request
 	}
-	tests := []struct {
+	var tests []struct {
 		name string
 		args args
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -764,11 +759,9 @@ func Test_getProductPriceHandler(t *testing.T) {
 		w http.ResponseWriter
 		r *http.Request
 	}
-	tests := []struct {
+	var tests []struct {
 		name string
 		args args
-	}{
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
