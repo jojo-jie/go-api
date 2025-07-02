@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -1036,50 +1035,5 @@ func Test_getProductPriceHandler1(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			getProductPriceHandler(tt.args.w, tt.args.r)
 		})
-	}
-}
-
-func CacheMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	cache := map[string][]byte{}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		cacheKey := fmt.Sprintf("%s_%s", r.Method, r.URL.String())
-
-		// use cached response of the key matches
-		if cached, ok := cache[cacheKey]; ok {
-			serverLogger.Info("SERVER using cached response")
-			w.Header().Add("X-Server-Cached", "true")
-			w.Write(cached)
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		var buf bytes.Buffer
-		// responseWriter is an implementation of the http.ResponseWriter
-		// interface that can intercept the response body
-		writer := &responseWriter{ResponseWriter: w, buffer: &buf}
-
-		// Call the main HTTP handler
-		next(writer, r)
-
-		// Cache the response
-		cache[cacheKey] = buf.Bytes()
-	}
-}
-
-func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		serverLogger.Info(fmt.Sprintf("SERVER Request: %s %s", r.Method, r.URL.Path))
-
-		var buf bytes.Buffer
-		// responseWriter is an implementation of the http.ResponseWriter
-		// interface that can intercept the response body
-		writer := &responseWriter{ResponseWriter: w, buffer: &buf}
-
-		// Call the main HTTP handler
-		next(writer, r)
-
-		serverLogger.Info(fmt.Sprintf("SERVER Response: %s %s %d %s", r.Method, r.URL.Path, writer.statusCode, time.Since(start)))
 	}
 }
