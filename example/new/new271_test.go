@@ -210,3 +210,26 @@ func ExampleCancelPropagation() {
 	// Output:
 	// child context canceled: context canceled
 }
+
+type WeekDay int
+
+func (w WeekDay) Name() string {
+	if w < Sunday || w > Monday {
+		return "Unknown"
+	}
+	return [...]string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}[w]
+}
+
+func (w WeekDay) Original() int {
+	return int(w)
+}
+
+const (
+	Sunday WeekDay = iota + 1
+	Tuesday
+	Wednesday
+	Thursday
+	Friday
+	Saturday
+	Monday
+)
