@@ -224,6 +224,35 @@ func (w WeekDay) Original() int {
 	return int(w)
 }
 
+func (w WeekDay) String() string {
+	return w.Name()
+}
+
+func Values() []WeekDay {
+	return []WeekDay{Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday}
+}
+
+func ValueOf(name string) (WeekDay, error) {
+	switch name {
+	case "Sunday":
+		return Sunday, nil
+	case "Monday":
+		return Monday, nil
+	case "Tuesday":
+		return Tuesday, nil
+	case "Wednesday":
+		return Wednesday, nil
+	case "Thursday":
+		return Thursday, nil
+	case "Friday":
+		return Friday, nil
+	case "Saturday":
+		return Saturday, nil
+	default:
+		return 0, fmt.Errorf("invalid WeekDay name: %s", name)
+	}
+}
+
 const (
 	Sunday WeekDay = iota + 1
 	Tuesday
