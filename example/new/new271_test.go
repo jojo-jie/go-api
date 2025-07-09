@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"reflect"
@@ -262,3 +263,67 @@ const (
 	Saturday
 	Monday
 )
+
+type Tree[E cmp.Ordered] struct {
+	root *node[E]
+}
+
+func (t *Tree[E]) Insert(element E) {
+	t.root = t.root.insert(element)
+}
+
+type node[E cmp.Ordered] struct {
+	value E
+	left  *node[E]
+	right *node[E]
+}
+
+func (n *node[E]) insert(element E) *node[E] {
+	if n == nil {
+		return &node[E]{value: element}
+	}
+	switch {
+	case element < n.value:
+		n.left = n.left.insert(element)
+	case element > n.value:
+		n.right = n.right.insert(element)
+	}
+	return n
+}
+
+func TestE(t *testing.T) {
+
+}
+
+type FuncTree[E any] struct {
+	root *funcNode[E]
+	cmp  func(E, E) int
+}
+
+func NewFuncTree[E any](cmp func(E, E) int) *FuncTree[E] {
+	return &FuncTree[E]{cmp: cmp}
+}
+
+func (t *FuncTree[E]) Insert(element E) {
+	t.root = t.root.insert(t.cmp, element)
+}
+
+type funcNode[E any] struct {
+	value E
+	left  *funcNode[E]
+	right *funcNode[E]
+}
+
+func (n *funcNode[E]) insert(cmp func(E, E) int, element E) *funcNode[E] {
+	if n == nil {
+		return &funcNode[E]{value: element}
+	}
+	sign := cmp(element, n.value)
+	switch {
+	case sign < 0:
+		n.left = n.left.insert(cmp, element)
+	case sign > 0:
+		n.right = n.right.insert(cmp, element)
+	}
+	return n
+}
