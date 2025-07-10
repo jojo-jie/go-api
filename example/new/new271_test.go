@@ -327,3 +327,35 @@ func (n *funcNode[E]) insert(cmp func(E, E) int, element E) *funcNode[E] {
 	}
 	return n
 }
+
+type MethodTree[E Comparer[E]] struct {
+	root *methodNode[E]
+}
+
+func (t *MethodTree[E]) Insert(element E) {
+	t.root = t.root.insert(element)
+}
+
+type methodNode[E Comparer[E]] struct {
+	value E
+	left  *methodNode[E]
+	right *methodNode[E]
+}
+
+func (n *methodNode[E]) insert(element E) *methodNode[E] {
+	if n == nil {
+		return &methodNode[E]{value: element}
+	}
+	sign := element.Compare(n.value)
+	switch {
+	case sign < 0:
+		n.left = n.left.insert(element)
+	case sign > 0:
+		n.right = n.right.insert(element)
+	}
+	return n
+}
+
+type Comparer[T any] interface {
+	Compare(T) int
+}
