@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"log"
+	"net/http"
 )
 
 /*
@@ -15,12 +16,22 @@ printf '%s\n' \
 | go run main.go
 */
 func main() {
-	server := mcp.NewServer(&mcp.Implementation{Name: "greeter", Version: "v1.0.0"}, nil)
-	mcp.AddTool(server, &mcp.Tool{Name: "greet", Description: "say hi"}, SayHi)
+	greeterServer := mcp.NewServer(&mcp.Implementation{Name: "greeter-server", Version: "v1.0.0"}, nil)
+	mcp.AddTool(greeterServer, &mcp.Tool{Name: "greet", Description: "say hi"}, SayHi)
 
-	log.Println("Greeter server running over stdio...")
-	if err := server.Run(context.Background(), mcp.NewStdioTransport()); err != nil {
-		log.Fatalf("Server run failed: %+v", err)
+	handler := mcp.NewStreamableHTTPHandler(func(request *http.Request) *mcp.Server {
+		log.Printf("Routing request for URL: %s\n", request.URL.Path)
+		switch request.URL.Path {
+		case "/greeter":
+			return greeterServer
+		default:
+			return nil
+		}
+	}, nil)
+	addr := ":8080"
+	log.Printf("Multi-service MCP server Listening on %s\n", addr)
+	if err := http.ListenAndServe(addr, handler); err != nil {
+		log.Fatalln(err)
 	}
 }
 
