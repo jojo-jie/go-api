@@ -1,9 +1,12 @@
 package main
 
 import (
+	"archive/zip"
 	"cmp"
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -358,4 +361,22 @@ func (n *methodNode[E]) insert(element E) *methodNode[E] {
 
 type Comparer[T any] interface {
 	Compare(T) int
+}
+
+func TestZip(t *testing.T) {
+	file, err := os.OpenFile("my_contents.zip", os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		slog.Error("failed to open file", "error", err)
+	}
+
+	writer := zip.NewWriter(file)
+	err = writer.AddFS(os.DirFS("/home/denis/Pictures/not_in_train/zip_test"))
+	if err != nil {
+		slog.Error("failed to write files to zip archive", "error", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		slog.Error("failed to close zip writer", "error", err)
+	}
 }
