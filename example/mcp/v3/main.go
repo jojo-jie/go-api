@@ -6,6 +6,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"log"
 	"net/http"
+	"time"
 )
 
 /*
@@ -16,14 +17,24 @@ printf '%s\n' \
 | go run main.go
 */
 func main() {
-	greeterServer := mcp.NewServer(&mcp.Implementation{Name: "greeter-server", Version: "v1.0.0"}, nil)
+	greeterServer := mcp.NewServer(&mcp.Implementation{Name: "greeter-service", Version: "v1.0.0"}, nil)
 	mcp.AddTool(greeterServer, &mcp.Tool{Name: "greet", Description: "say hi"}, SayHi)
+
+	mathServer := mcp.NewServer(&mcp.Implementation{Name: "math-service", Title: "1.0", Version: "v1.0.0"}, nil)
+	mcp.AddTool(mathServer, &mcp.Tool{Name: "add", Description: "Add two integers"}, Add)
+
+	timezoneServer := mcp.NewServer(&mcp.Implementation{Name: "timezone-service", Title: "1.0", Version: "v1.0.0"}, nil)
+	mcp.AddTool(timezoneServer, &mcp.Tool{Name: "timezone", Description: "Get current time with timezone, Asia/Shanghai is default"}, Timezone)
 
 	handler := mcp.NewStreamableHTTPHandler(func(request *http.Request) *mcp.Server {
 		log.Printf("Routing request for URL: %s\n", request.URL.Path)
 		switch request.URL.Path {
 		case "/greeter":
 			return greeterServer
+		case "/math":
+			return mathServer
+		case "/timezone":
+			return timezoneServer
 		default:
 			return nil
 		}
@@ -40,10 +51,30 @@ type HiParams struct {
 }
 
 func SayHi(ctx context.Context, session *mcp.ServerSession, c *mcp.CallToolParamsFor[HiParams]) (*mcp.CallToolResultFor[any], error) {
-	resultText := fmt.Sprintf("Hi %s Name==%s", c.Arguments.Name, c.Name)
+	resultText := fmt.Sprintf("Hi %s nice", c.Arguments.Name)
 	return &mcp.CallToolResultFor[any]{
 		Content: []mcp.Content{
 			&mcp.TextContent{Text: resultText},
 		},
 	}, nil
+}
+
+type AddParams struct{ A, B int }
+
+func Add(ctx context.Context, session *mcp.ServerSession, c *mcp.CallToolParamsFor[AddParams]) (*mcp.CallToolResultFor[any], error) {
+	result := c.Arguments.A + c.Arguments.B
+	return &mcp.CallToolResultFor[any]{
+		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("The sum is: %d", result)}},
+	}, nil
+}
+
+type TimezoneParams struct {
+	Timezone string `json:"timezone"`
+}
+
+func Timezone(ctx context.Context, session *mcp.ServerSession, c *mcp.CallToolParamsFor[TimezoneParams]) (*mcp.CallToolResultFor[any], error) {
+	loc, err := time.LoadLocation(c.Arguments.Timezone)
+	return &mcp.CallToolResultFor[any]{
+		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("current time is %s", time.Now().In(loc))}},
+	}, err
 }
