@@ -1,0 +1,20 @@
+# docker run -it --rm \
+#  -e "USER_NAME=$USER_NAME" \
+#  -e "PASSWORD=$PASSWORD" \
+#  -v $(pwd)/tools.yaml:/tools.yaml \
+#  us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:$VERSION \
+#  /toolbox --tools-file "/tools.yaml"
+sources:
+  my-mysql-source:
+    kind: mysql
+    host: 10.6.100.1
+    port: 3306
+    database: bifrost
+    user: ${USER_NAME}
+    password: ${PASSWORD}
+    queryTimeout: 30s # Optional: query timeout duration
+tools:
+  execute_sql_tool:
+    kind: mysql-execute-sql
+    source: my-mysql-source
+    description: Use this tool to execute sql statement.
