@@ -2,93 +2,118 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+const (
+	prefixFileURI = "file:///"
+	prefixListURI = "mcp://fs/list"
+	mimeTextPlain = "text/plain"
+)
+
 func main() {
-	server := mcp.NewServer(&mcp.Implementation{Name: "filesystem-server", Version: "1.0.1"}, nil)
+	server := mcp.NewServer(
+		&mcp.Implementation{Name: "filesystem-server", Version: "1.0.1"},
+		nil,
+	)
 
-	pwd, err := os.Getwd()
+	root, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Failed to get current directory: %v", err)
+		log.Fatalf("cannot get working directory: %v", err)
 	}
-	log.Printf("File server serving from directory: %s", pwd)
+	log.Printf("File server serving from: %s", root)
 
-	// 使用我们自己实现的 File Handler
-	handler := createFileHandler(pwd)
+	// 注册资源
+	server.AddResource(
+		&mcp.Resource{
+			URI:         prefixListURI,
+			Name:        "list_files",
+			Description: "List all non-directory files in the current directory.",
+		},
+		listDir(root),
+	)
 
-	// 添加一个虚构的资源，用于列出目录内容
-	server.AddResource(&mcp.Resource{
-		URI:         "mcp://fs/list",
-		Name:        "list_files",
-		Description: "List all non-directory files in the current directory.",
-	}, listDirectoryHandler(pwd))
-	// 添加一个资源模板，用于读取指定的文件
-	server.AddResourceTemplate(&mcp.ResourceTemplate{
-		Name:        "read_file",
-		URITemplate: "file:///{+filename}",
-		Description: "Read a specific file from the directory. 'filename' is the relative path to the file.",
-	}, handler)
+	server.AddResourceTemplate(
+		&mcp.ResourceTemplate{
+			Name:        "read_file",
+			URITemplate: "file:///{+filename}",
+			Description: "Read a specific file from the directory.",
+		},
+		readFile(root),
+	)
 
 	log.Println("File system server running over stdio...")
 	if err := server.Run(context.Background(), mcp.NewStdioTransport()); err != nil {
-		log.Fatalf("Server run failed: %v", err)
+		log.Fatalf("server run failed: %v", err)
 	}
 }
 
-// createFileHandler 是一个简化的、用于演示的 ResourceHandler 工厂函数。
-func createFileHandler(baseDir string) mcp.ResourceHandler {
-	return func(ctx context.Context, ss *mcp.ServerSession, params *mcp.ReadResourceParams) (*mcp.ReadResourceResult, error) {
-		// 注意：在生产环境中，这里必须调用 ss.ListRoots() 来获取客户端授权的
-		// 根目录，并进行严格的安全检查。
-		// 为了让这个入门示例能用简单的管道命令验证，我们暂时省略了这个双向调用。
-		requestedPath := filepath.Join(baseDir, filepath.FromSlash(params.URI[len("file:///"):]))
+// readFile 返回一个 ResourceHandler，用于读取指定文件
+func readFile(base string) mcp.ResourceHandler {
+	return func(ctx context.Context, _ *mcp.ServerSession, p *mcp.ReadResourceParams) (*mcp.ReadResourceResult, error) {
+		rel := strings.TrimPrefix(p.URI, prefixFileURI)
+		rel = filepath.FromSlash(rel)
+		abs, err := secureJoin(base, rel)
+		if err != nil {
+			return nil, mcp.ResourceNotFoundError(p.URI)
+		}
 
-		data, err := os.ReadFile(requestedPath)
+		data, err := os.ReadFile(abs)
 		if err != nil {
 			if os.IsNotExist(err) {
-				return nil, mcp.ResourceNotFoundError(params.URI)
+				return nil, mcp.ResourceNotFoundError(p.URI)
 			}
-			return nil, fmt.Errorf("failed to read file: %w", err)
+			return nil, errors.Wrap(err, "read file failed: %v")
 		}
 
 		return &mcp.ReadResourceResult{
 			Contents: []*mcp.ResourceContents{
-				{URI: params.URI, MIMEType: "text/plain", Text: string(data)},
+				{URI: p.URI, MIMEType: mimeTextPlain, Text: string(data)},
 			},
 		}, nil
 	}
 }
 
-// listDirectoryHandler 是一个自定义的 ResourceHandler，用于实现列出目录的功能
-func listDirectoryHandler(dir string) mcp.ResourceHandler {
-	return func(ctx context.Context, ss *mcp.ServerSession, params *mcp.ReadResourceParams) (*mcp.ReadResourceResult, error) {
-		// 同样，为简化本地验证，暂时省略对 ss.ListRoots() 的调用。
-
-		entries, err := os.ReadDir(dir)
+// listDir 返回一个 ResourceHandler，用于列出 base 目录下的文件
+func listDir(base string) mcp.ResourceHandler {
+	return func(ctx context.Context, _ *mcp.ServerSession, p *mcp.ReadResourceParams) (*mcp.ReadResourceResult, error) {
+		entries, err := os.ReadDir(base)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read directory: %w", err)
+			return nil, errors.Wrap(err, "cannot read directory: %v")
 		}
 
-		var fileList string
+		var files []string
 		for _, e := range entries {
 			if !e.IsDir() {
-				fileList += e.Name() + "\n"
+				files = append(files, e.Name())
 			}
 		}
-		if fileList == "" {
-			fileList = "(The directory is empty or contains no files)"
+
+		content := "(The directory is empty or contains no files)"
+		if len(files) > 0 {
+			content = strings.Join(files, "\n")
 		}
 
 		return &mcp.ReadResourceResult{
 			Contents: []*mcp.ResourceContents{
-				{URI: params.URI, MIMEType: "text/plain", Text: fileList},
+				{URI: p.URI, MIMEType: mimeTextPlain, Text: content},
 			},
 		}, nil
 	}
+}
+
+// secureJoin 防止目录穿越，确保最终路径在 base 之内
+func secureJoin(base, rel string) (string, error) {
+	abs := filepath.Join(base, rel)
+	relToBase, err := filepath.Rel(base, abs)
+	if err != nil || strings.HasPrefix(relToBase, "..") {
+		return "", os.ErrNotExist
+	}
+	return abs, nil
 }
