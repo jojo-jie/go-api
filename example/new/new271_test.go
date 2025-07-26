@@ -380,3 +380,51 @@ func TestZip(t *testing.T) {
 		slog.Error("failed to close zip writer", "error", err)
 	}
 }
+
+type Queue []int
+
+// Enqueue adds an element to the rear of the queue
+func (q *Queue) Enqueue(value int) {
+	*q = append(*q, value)
+}
+
+// Dequeue removes and returns an element from the front of the queue
+func (q *Queue) Dequeue() (int, error) {
+	if q.IsEmpty() {
+		return 0, fmt.Errorf("empty queue")
+	}
+	value := (*q)[0]
+	(*q)[0] = 0 // Zero out the element (optional)
+	*q = (*q)[1:]
+	return value, nil
+}
+
+// CheckFront returns the front element without removing it
+func (q *Queue) CheckFront() (int, error) {
+	if q.IsEmpty() {
+		return 0, fmt.Errorf("empty queue")
+	}
+	return (*q)[0], nil
+}
+
+// IsEmpty checks if the queue is empty
+func (q *Queue) IsEmpty() bool {
+	return len(*q) == 0
+}
+
+// Size returns the number of elements in the queue
+func (q *Queue) Size() int {
+	return len(*q)
+}
+
+// PrintQueue displays all elements in the queue
+func (q *Queue) PrintQueue() {
+	if q.IsEmpty() {
+		fmt.Println("Queue is empty")
+		return
+	}
+	for _, item := range *q {
+		fmt.Printf("%d ", item)
+	}
+	fmt.Println()
+}
