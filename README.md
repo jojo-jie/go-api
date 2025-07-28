@@ -1,7 +1,7 @@
 
 ## 目的
 
-本项目采用了一系列Golang中比较流行的组件快速搭建Restful Web API
+本项目采用了一系列Golang中比较流行的组件快速搭建 Web API,支持常见 mysql redis
 
 ## 特色
 
@@ -19,6 +19,7 @@
 9. 自行实现了国际化i18n的一些基本功能
 10. 本项目可使用基于cookie实现的session来保存登录状态的，或使用jwt token验证
 11. 令牌桶限流
+12. 补充mcp example
 
 本项目已经预先实现了一些常用的代码方便参考和复用:
 
