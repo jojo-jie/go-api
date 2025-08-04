@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
 	"log/slog"
@@ -22,8 +23,9 @@ var broadcast = make(chan string) // 广播消息通道
 // 处理 WebSocket 连接
 func handleConnections(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
+	uuid := uuid.New()
 	if err != nil {
-		log.Printf("upgrade error: %v", err)
+		log.Printf("upgrade error: %v %s", err, uuid.String())
 		return
 	}
 	defer ws.Close()
