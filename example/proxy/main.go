@@ -2,15 +2,26 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 // handleProxy 处理客户端的HTTP请求并转发到目标服务器
 func handleProxy(w http.ResponseWriter, r *http.Request) {
 	// 创建HTTP客户端
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        100,              // 最大空闲连接数
+			IdleConnTimeout:     90 * time.Second, // 空闲连接超时
+			TLSHandshakeTimeout: 10 * time.Second, // TLS握手超时
+			MaxIdleConnsPerHost: 10,
+		},
+		Timeout: 30 * time.Second, // 总体请求超时
+	}
 	readAll, err := io.ReadAll(r.Body)
 	if err != nil {
 		return
@@ -52,8 +63,15 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// 注册代理处理函数，监听所有路径
-	http.HandleFunc("/", handleProxy)
-	// 启动服务器，监听8080端口
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	g := errgroup.Group{}
+	g.Go(func() error {
+		http.HandleFunc("/proxy", handleProxy)
+		if err := http.ListenAndServe(":8080", nil); err != nil {
+			return errors.Wrap(err, "proxy server error")
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		log.Fatal(err)
+	}
 }
