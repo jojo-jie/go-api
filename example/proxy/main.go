@@ -7,6 +7,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"sync/atomic"
 	"time"
 )
 
@@ -62,12 +65,56 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, resp.Body)
 }
 
+type ReverseProxy struct {
+	backends []*url.URL // 后端服务URL列表
+	current  uint64     // 当前轮询索引，原子操作确保并发安全
+}
+
+func NewReverseProxy(backendURLs []string) *ReverseProxy {
+	urls := make([]*url.URL, len(backendURLs))
+	for i, u := range backendURLs {
+		parsedURL, err := url.Parse(u)
+		if err != nil {
+			log.Fatalf("Invalid backend URL: %v", err)
+		}
+		urls[i] = parsedURL
+	}
+	return &ReverseProxy{backends: urls}
+}
+
+// ServeHTTP 实现http.Handler接口，选择后端并转发请求
+func (p *ReverseProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 使用原子操作获取当前后端索引，实现轮询
+	index := atomic.AddUint64(&p.current, 1) % uint64(len(p.backends))
+	backend := p.backends[index]
+
+	// 创建单主机反向代理
+	proxy := httputil.NewSingleHostReverseProxy(backend)
+
+	// 转发请求到选定的后端服务
+	proxy.ServeHTTP(w, r)
+}
+
 func main() {
 	g := errgroup.Group{}
 	g.Go(func() error {
 		http.HandleFunc("/proxy", handleProxy)
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			return errors.Wrap(err, "proxy server error")
+		}
+		return nil
+	})
+	g.Go(func() error {
+		// 定义后端服务列表
+		backends := []string{
+			"http://backend1:8081",
+			"http://backend2:8082",
+		}
+
+		// 初始化反向代理
+		proxy := NewReverseProxy(backends)
+		if err := http.ListenAndServe(":8070", proxy); err != nil {
+			return errors.Wrap(err, "reverse proxy server error")
 		}
 		return nil
 	})
