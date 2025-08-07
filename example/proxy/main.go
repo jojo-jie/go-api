@@ -66,18 +66,18 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 }
 
 type ReverseProxy struct {
-	backends []*url.URL // 后端服务URL列表
-	current  uint64     // 当前轮询索引，原子操作确保并发安全
+	backends map[uint64]*url.URL // 后端服务URL列表
+	current  uint64              // 当前轮询索引，原子操作确保并发安全
 }
 
 func NewReverseProxy(backendURLs []string) *ReverseProxy {
-	urls := make([]*url.URL, len(backendURLs))
+	urls := make(map[uint64]*url.URL, len(backendURLs))
 	for i, u := range backendURLs {
 		parsedURL, err := url.Parse(u)
 		if err != nil {
 			log.Fatalf("Invalid backend URL: %v", err)
 		}
-		urls[i] = parsedURL
+		urls[uint64(i)] = parsedURL
 	}
 	return &ReverseProxy{backends: urls}
 }
@@ -90,9 +90,28 @@ func (p *ReverseProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// 创建单主机反向代理
 	proxy := httputil.NewSingleHostReverseProxy(backend)
+	proxy.Transport = &http.Transport{
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		MaxIdleConnsPerHost:   10,
+		ResponseHeaderTimeout: 10 * time.Second,
+	}
 
 	// 转发请求到选定的后端服务
 	proxy.ServeHTTP(w, r)
+}
+
+func (p *ReverseProxy) healthCheck() {
+	for {
+		for i, backend := range p.backends {
+			resp, err := http.Get(backend.String() + "/health")
+			if err != nil || resp.StatusCode != http.StatusOK {
+				// 标记后端不可用，动态剔除
+				delete(p.backends, i)
+			}
+		}
+		time.Sleep(10 * time.Second)
+	}
 }
 
 func main() {
