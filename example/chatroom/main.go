@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -123,6 +124,20 @@ func (c *Client) read(cr *ChatRoom) {
 		// 广播消息
 		cr.broadcast <- []byte(c.nickname + ": " + string(message))
 	}
+}
+
+// 优化广播逻辑，增加超时和错误处理
+func (cr *ChatRoom) broadcastMessage(message []byte) {
+	cr.clients.Range(func(key, value interface{}) bool {
+		client := value.(*Client)
+		select {
+		case client.send <- message:
+		case <-time.After(1 * time.Second): // 超时1秒
+			log.Println("Send timeout for client:", client.nickname)
+			cr.unregister <- client
+		}
+		return true
+	})
 }
 
 func main() {
