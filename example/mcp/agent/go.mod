@@ -1,6 +1,6 @@
 module mcp.agent
 
-go 1.24
+go 1.25
 
 require (
 	github.com/modelcontextprotocol/go-sdk v0.2.0

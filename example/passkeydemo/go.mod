@@ -1,6 +1,6 @@
 module passkeydemo
 
-go 1.24.1
+go 1.25.1
 
 require (
 	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff

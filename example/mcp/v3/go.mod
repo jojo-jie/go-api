@@ -1,6 +1,6 @@
 module mcp.v3
 
-go 1.24.1
+go 1.25.1
 
 require github.com/modelcontextprotocol/go-sdk v0.2.0
 
