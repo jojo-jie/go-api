@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 	"log"
 	"log/slog"
 	"net/http"
 	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 )
 
 // 定义 WebSocket 升级器
@@ -116,4 +119,40 @@ func (h multiHandler) WithGroup(name string) slog.Handler {
 		handlers = append(handlers, hh.WithGroup(name))
 	}
 	return multiHandler(handlers)
+}
+
+type Person struct {
+	Name string `json:"name"`
+	Born Date   `json:"born"`
+}
+
+type Date time.Time
+
+// 实现 MarshalJSON
+func (d Date) MarshalJSON() ([]byte, error) {
+	formatted := time.Time(d).Format(time.DateOnly)
+	return json.Marshal(formatted)
+}
+
+func (d *Date) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	parsed, err := time.Parse(time.DateOnly, s)
+	if err != nil {
+		return err
+	}
+	*d = Date(parsed)
+	return nil
+}
+
+func TestJson(t *testing.T) {
+	p := Person{Name: "Alice", Born: Date(time.Now())}
+	b, _ := json.Marshal(p)
+	t.Log(string(b))
+
+	var p2 Person
+	json.Unmarshal(b, &p2)
+	t.Logf("%+v", p2)
 }

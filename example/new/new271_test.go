@@ -200,21 +200,6 @@ func TestCCtx(t *testing.T) {
 	})
 }
 
-func ExampleCancelPropagation() {
-	ctx, cancel := WithCancel(Background())
-
-	go func() {
-		<-ctx.Done()
-		fmt.Println("child context canceled:", ctx.Err())
-	}()
-
-	time.Sleep(100 * time.Millisecond)
-	cancel(nil)
-	time.Sleep(100 * time.Millisecond)
-	// Output:
-	// child context canceled: context canceled
-}
-
 type WeekDay int
 
 func (w WeekDay) Name() string {

@@ -1,6 +1,6 @@
 module mcp.v2
 
-go 1.25.1
+go 1.25
 
 require (
 	github.com/ThinkInAIXYZ/go-mcp v0.1.0
