@@ -19,9 +19,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/onsi/ginkgo v1.12.1 // indirect
-	github.com/onsi/gomega v1.10.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.2.0
@@ -38,7 +35,11 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require go.uber.org/automaxprocs v1.5.1
+require (
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/google/uuid v1.6.0
+	go.uber.org/automaxprocs v1.5.1
+)
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -46,8 +47,10 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
 	github.com/bytedance/sonic v1.11.2 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.3 // indirect
@@ -56,7 +59,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-sql-driver/mysql v1.5.1-0.20200311113236-681ffa848bae // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/gorilla/sessions v1.1.3 // indirect
