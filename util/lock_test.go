@@ -23,7 +23,7 @@ func TestBaseLock(t *testing.T) {
 	// 50 个携程对 count 进行 +1 操作 100 次
 	for i := 0; i < 50; i++ {
 		client := redis.NewClient(&redis.Options{
-			Addr: "192.168.36.109:6379",
+			Addr: "localhost:6379",
 		})
 		// 1. 创建锁实例
 		lock := NewRedisLock(client, lockKey, expiration)
