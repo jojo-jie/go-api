@@ -3,10 +3,11 @@ package util
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 var wg sync.WaitGroup

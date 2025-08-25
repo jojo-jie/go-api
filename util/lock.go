@@ -2,9 +2,10 @@ package util
 
 import (
 	"context"
+	"time"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"time"
 )
 
 // RedisLock Redis锁结构
