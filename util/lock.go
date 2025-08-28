@@ -99,3 +99,25 @@ func (lock *RedisLock) renewal(ctx context.Context) {
 		}
 	}
 }
+
+func (lock *RedisLock) Unlock(ctx context.Context) (bool, error) {
+	// 1. 先停止续期
+	if lock.cancelRenewal != nil {
+		lock.cancelRenewal()
+	}
+
+	// 2. 释放锁，使用 lua 脚本保证原子性
+	cadScript := `
+	if redis.call("GET", KEYS[1]) == ARGV[1] then
+		return redis.call("DEL", KEYS[1])
+	else
+		return 0
+	end
+	`
+	script := redis.NewScript(cadScript)
+	result, err := script.Run(ctx, lock.client, []string{lock.key}, lock.value).Int64()
+	if err != nil {
+		return false, nil
+	}
+	return result > 0, nil
+}

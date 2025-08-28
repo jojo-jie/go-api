@@ -2,7 +2,6 @@ package util
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -54,14 +53,51 @@ func TestBaseLock(t *testing.T) {
 					panic(err)
 				}
 				if !release {
-					fmt.Printf("协程 %d 解锁失败\n", goroutineId)
+					t.Logf("协程 %d 解锁失败\n", goroutineId)
 				}
 				if count%100 == 0 {
-					fmt.Printf("count = %d", count)
+					t.Logf("count = %d", count)
 				}
 			}
 		}()
 	}
 	wg.Wait()
 	t.Logf("count = %d", count)
+}
+
+func TestLockRenewal(t *testing.T) {
+	ctx := context.Background()
+	lockKey := "my_service_name_" + "lock"
+	expiration := 6 * time.Second
+	client := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	// 1. 创建锁实例
+	lock := NewRedisLock(client, lockKey, expiration)
+	success, err := lock.LockAndRenewal(ctx)
+	if err != nil {
+		panic(err)
+	}
+	if !success {
+		t.Log("加锁失败")
+	}
+
+	// 新建一个客户端尝试去获取锁
+	client1 := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	ctx2 := context.Background()
+	rLock := NewRedisLock(client1, lockKey, expiration)
+	t.Log("新建一个客户端尝试获取锁")
+	for {
+		success, err := rLock.Acquire(ctx2)
+		if err != nil {
+			panic(err)
+		} else if !success {
+			t.Log("新客户端获取锁失败")
+		} else {
+			t.Log("获取锁成功")
+		}
+
+	}
 }
