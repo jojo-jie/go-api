@@ -98,6 +98,60 @@ func TestLockRenewal(t *testing.T) {
 		} else {
 			t.Log("获取锁成功")
 		}
+	}
+}
 
+func TestUnlock(t *testing.T) {
+	ctx := context.Background()
+	lockKey := "my_service_name_" + "lock"
+	expiration := 2 * time.Second
+
+	client := redis.NewClient(&redis.Options{
+		Addr: "192.168.36.109:6379",
+	})
+	// 1. 创建锁实例
+	lock := NewRedisLock(client, lockKey, expiration)
+	success, err := lock.LockAndRenewal(ctx)
+	if err != nil {
+		panic(err)
+	}
+	if !success {
+		t.Logf("加锁失败\n")
+	}
+	t.Logf("加锁成功时间为%s\n", time.Now().Format("2006-01-02 15:04:05.000"))
+	go func() {
+		// 10秒后释放锁
+		time.Sleep(time.Second * 10)
+		release, err := lock.Unlock(ctx)
+		if err != nil {
+			panic(err)
+		}
+		if !release {
+			t.Logf("释放锁失败\n")
+		}
+		t.Logf("释放锁时间为%s\n", time.Now().Format("2006-01-02 15:04:05.000"))
+	}()
+
+	// 新建一个客户端尝试去获取锁
+	client1 := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	ctx2 := context.Background()
+	lock2 := NewRedisLock(client1, lockKey, expiration)
+	t.Logf("新建一个客户端尝试获取锁\n")
+	for {
+		success, err := lock2.Acquire(ctx2)
+		if err != nil {
+			panic(err)
+		} else if !success {
+			t.Logf("新客户端获取锁失败\n")
+		} else {
+			t.Logf("新客户端获取锁成功，时间为：%s\n", time.Now().Format(time.DateTime))
+
+			break
+
+		}
+		time.Sleep(time.Millisecond * 500)
+		defer lock2.Release(ctx2)
 	}
 }
